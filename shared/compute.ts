@@ -199,15 +199,26 @@ export function verifiedPairs(
 		]);
 }
 
+/**
+ * A failed build pins several toolchains at once and cannot say which one is
+ * to blame, so a failure only implicates a toolchain version that no
+ * successful build of the same release used.
+ */
 function verifiedFor(
 	packageName: string,
 	version: string,
 	verified: VerificationResult[],
 	outcome: ResultClass,
 ): VersionCompatibility["verified"] {
+	const forThisVersion = (pairs: ReturnType<typeof verifiedPairs>) =>
+		pairs.filter((pair) => pair.package === packageName && pair.version === version);
+	const successes = forThisVersion(verifiedPairs(verified, "success"));
+	const provenToWork = (pair: (typeof successes)[number]) =>
+		successes.some((ok) => ok.toolchain === pair.toolchain && sameLine(ok.toolchainVersion, pair.toolchainVersion));
+
 	const result: VersionCompatibility["verified"] = {};
-	for (const pair of verifiedPairs(verified, outcome)) {
-		if (pair.package !== packageName || pair.version !== version) {
+	for (const pair of forThisVersion(verifiedPairs(verified, outcome))) {
+		if (outcome !== "success" && provenToWork(pair)) {
 			continue;
 		}
 		const list = (result[pair.toolchain] ??= []);
