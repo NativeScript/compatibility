@@ -195,3 +195,28 @@ describe("failed builds", () => {
 		expect(doc().packages["@nativescript/android"].versions["9.1.1"].suspect).toEqual({ jdk: ["21", "17"] });
 	});
 });
+
+describe("latest supported", () => {
+	it("names the newest usable version when the newest stable one is not", () => {
+		const doc = buildDocument({
+			generatedAt: "2026-09-09T00:00:00.000Z",
+			toolchains: { xcode: [], cocoapods: [], compileSdk: [], buildTools: [], jdk: [{ version: "26", prerelease: true }, { version: "25" }, { version: "21" }, { version: "17" }], node: [] },
+			packages: [
+				{
+					spec: { name: "@nativescript/android", toolchains: ["jdk"], keep: 5 },
+					document: { distTags: {}, manifests: [{ version: "9.1.1", requirements: { jdk: ">=17" } }] },
+				},
+			],
+			overrides: { requirements: [], advisories: [] },
+			verified: [
+				{ package: "@nativescript/android", version: "9.1.1", toolchains: { jdk: "25" }, with: { nativescript: "9.1.1", node: "24" }, outcome: "failure", attempts: 2, recordedAt: "2026-09-09T00:00:00Z" },
+				{ package: "@nativescript/android", version: "9.1.1", toolchains: { jdk: "21" }, with: { nativescript: "9.1.1", node: "24" }, recordedAt: "2026-09-09T00:00:00Z" },
+			],
+		});
+		const cell = summarizeCell(doc, "@nativescript/android", "9.1.1", "jdk");
+		expect(cell.latest).toMatchObject({ version: "25", cell: { state: "unsupported" } });
+		expect(cell.latestSupported).toMatchObject({ version: "21", cell: { state: "verified" } });
+		expect(cell.prerelease).toMatchObject({ version: "26" });
+		expect(summarizeCell(doc, "@nativescript/android", "9.1.1", "jdk").latestSupported?.version).not.toBe("17");
+	});
+});

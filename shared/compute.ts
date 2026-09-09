@@ -291,6 +291,8 @@ export interface CellSummary {
 	latest?: { version: string; cell: Cell };
 	/** A prerelease toolchain newer than `latest`, when one is known. */
 	prerelease?: { version: string; cell: Cell };
+	/** When `latest` is not usable: the newest stable version that is verified or declared. */
+	latestSupported?: { version: string; cell: Cell };
 }
 
 /**
@@ -322,6 +324,11 @@ export function summarizeCell(
 	const prerelease = breakdown.find(
 		(item) => item.prerelease && (!latest || breakdown.indexOf(item) < breakdown.indexOf(latest)),
 	);
+	const usable = (state: CellState) => state === "verified" || state === "declared";
+	const latestSupported =
+		latest && !usable(latest.cell.state)
+			? breakdown.find((item) => !item.prerelease && item !== latest && usable(item.cell.state))
+			: undefined;
 
 	return {
 		state: verified.length ? "verified" : rawRange ? "declared" : "unverified",
@@ -333,6 +340,7 @@ export function summarizeCell(
 		breakdown,
 		...(latest ? { latest: { version: latest.version, cell: latest.cell } } : {}),
 		...(prerelease ? { prerelease: { version: prerelease.version, cell: prerelease.cell } } : {}),
+		...(latestSupported ? { latestSupported: { version: latestSupported.version, cell: latestSupported.cell } } : {}),
 	};
 }
 

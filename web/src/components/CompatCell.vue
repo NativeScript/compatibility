@@ -48,6 +48,15 @@ const background = computed(() => {
 		<StateIcon :state="state" :size="22" class="mx-auto" />
 		<span class="mt-1 block tabular-nums" :class="TEXT[state]">{{ summary.latest?.version ?? "No data" }}</span>
 		<span
+			v-if="summary.latestSupported"
+			class="mt-0.5 flex items-center justify-center gap-1 text-[11px] tabular-nums"
+			:title="`${summary.latestSupported.version}: ${summary.latestSupported.cell.reason}`"
+		>
+			<StateIcon :state="summary.latestSupported.cell.state" :size="12" />
+			<span class="font-medium text-ok">{{ summary.latestSupported.version }}</span>
+			<span class="text-neutral-500 dark:text-neutral-400">supported</span>
+		</span>
+		<span
 			v-if="summary.prerelease"
 			class="mt-0.5 flex items-center justify-center gap-1 text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400"
 			:title="`${summary.prerelease.version} beta: ${summary.prerelease.cell.reason}`"
