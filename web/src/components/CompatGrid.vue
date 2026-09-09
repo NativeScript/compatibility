@@ -131,12 +131,6 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 								>
 									{{ tag }}
 								</span>
-								<span
-									class="text-[10px] tracking-wider text-neutral-400 uppercase dark:text-neutral-500"
-									:title="`Requirements: ${document.packages[group.name].versions[version].source}`"
-								>
-									{{ document.packages[group.name].versions[version].source }}
-								</span>
 							</div>
 						</th>
 						<template v-for="key in ALL_KEYS" :key="key">
