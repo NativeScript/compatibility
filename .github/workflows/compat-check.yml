@@ -126,11 +126,19 @@ jobs:
             --resolved node="$(node --version | tr -d v)" --resolved xcode="$(xcodebuild -version | head -1 | cut -d' ' -f2)" \
             --outcome ${{ steps.build.outcome }} --signature "$(grep -aE 'error|FAILURE|failed' build.log | grep -viE 'warning|deprecat' | tail -1)" \
             --evidence "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      # Only the file this job created travels; the checkout's existing records stay behind.
+      - name: Collect new result
+        if: always() && steps.build.outcome != 'skipped'
+        run: |
+          mkdir -p results
+          git ls-files --others --exclude-standard data/verified | while read -r f; do
+            mkdir -p "results/$(dirname "$f")" && cp "$f" "results/$f"
+          done
       - uses: actions/upload-artifact@v4
         if: always() && steps.build.outcome != 'skipped'
         with:
           name: result-ios-${{ matrix.runtime }}-xcode-${{ matrix.xcode }}-cli-${{ matrix.cli }}-node-${{ matrix.node }}
-          path: data/verified/
+          path: results/data/verified/
 
   android:
     name: Android ${{ matrix.runtime }} · SDK ${{ matrix.compileSdk }} · JDK ${{ matrix.jdk }} · CLI ${{ matrix.cli }} · Node ${{ matrix.node }}
@@ -176,11 +184,18 @@ jobs:
             --resolved node="$(node --version | tr -d v)" --resolved jdk="$(java -version 2>&1 | head -1 | cut -d'"' -f2)" \
             --outcome ${{ steps.build.outcome }} --signature "$(grep -aE 'error|FAILURE|failed' build.log | grep -viE 'warning|deprecat' | tail -1)" \
             --evidence "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      - name: Collect new result
+        if: always() && steps.build.outcome != 'skipped'
+        run: |
+          mkdir -p results
+          git ls-files --others --exclude-standard data/verified | while read -r f; do
+            mkdir -p "results/$(dirname "$f")" && cp "$f" "results/$f"
+          done
       - uses: actions/upload-artifact@v4
         if: always() && steps.build.outcome != 'skipped'
         with:
           name: result-android-${{ matrix.runtime }}-sdk-${{ matrix.compileSdk }}-jdk-${{ matrix.jdk }}-cli-${{ matrix.cli }}-node-${{ matrix.node }}
-          path: data/verified/
+          path: results/data/verified/
 
   collect:
     name: Record results
