@@ -1,0 +1,21 @@
+{
+	"$schema": "https://compatibility.nativescript.org/v1/schemas/verified.json",
+	"package": "@nativescript/android",
+	"version": "9.1.0",
+	"toolchains": {
+		"compileSdk": "35",
+		"buildTools": "35.0.1",
+		"jdk": "25"
+	},
+	"with": {
+		"nativescript": "9.1.1",
+		"node": "24"
+	},
+	"resolved": {
+		"node": "24.20.0",
+		"jdk": "25.0.4.1"
+	},
+	"outcome": "failure",
+	"evidence": "https://github.com/NativeScript/compatibility/actions/runs/34335784637",
+	"recordedAt": "2026-09-09T09:40:32.324Z"
+}
