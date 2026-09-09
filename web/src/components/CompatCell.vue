@@ -9,8 +9,21 @@ import StateIcon from "./StateIcon.vue";
 const props = defineProps<{ summary: CellSummary; toolchain: string; open: boolean }>();
 const emit = defineEmits<{ toggle: [] }>();
 
-/** The cell speaks for the newest stable toolchain version; everything older lives in the timeline. */
-const state = computed<CellState>(() => props.summary.latest?.cell.state ?? "unverified");
+/**
+ * The headline is the newest stable version that works; when the newest one
+ * does not, it moves to a secondary line with its problem. Older versions
+ * live in the timeline.
+ */
+const primary = computed(() => props.summary.latestSupported ?? props.summary.latest);
+const secondary = computed(() => (props.summary.latestSupported ? props.summary.latest : undefined));
+const state = computed<CellState>(() => primary.value?.cell.state ?? "unverified");
+const SECONDARY_LABEL: Record<CellState, string> = {
+	verified: "verified",
+	declared: "declared",
+	unverified: "unverified",
+	advisory: "advisory",
+	unsupported: "unsupported",
+};
 const flagged = computed(() => props.summary.advisories.length > 0);
 
 const TEXT: Record<CellState, string> = {
@@ -46,15 +59,15 @@ const background = computed(() => {
 		@keydown.space.prevent="emit('toggle')"
 	>
 		<StateIcon :state="state" :size="22" class="mx-auto" />
-		<span class="mt-1 block tabular-nums" :class="TEXT[state]">{{ summary.latest?.version ?? "No data" }}</span>
+		<span class="mt-1 block tabular-nums" :class="TEXT[state]">{{ primary?.version ?? "No data" }}</span>
 		<span
-			v-if="summary.latestSupported"
+			v-if="secondary"
 			class="mt-0.5 flex items-center justify-center gap-1 text-[11px] tabular-nums"
-			:title="`${summary.latestSupported.version}: ${summary.latestSupported.cell.reason}`"
+			:title="`${secondary.version}: ${secondary.cell.reason}`"
 		>
-			<StateIcon :state="summary.latestSupported.cell.state" :size="12" />
-			<span class="font-medium text-ok">{{ summary.latestSupported.version }}</span>
-			<span class="text-neutral-500 dark:text-neutral-400">supported</span>
+			<StateIcon :state="secondary.cell.state" :size="12" />
+			<span class="font-medium" :class="TEXT[secondary.cell.state]">{{ secondary.version }}</span>
+			<span class="text-neutral-500 dark:text-neutral-400">{{ SECONDARY_LABEL[secondary.cell.state] }}</span>
 		</span>
 		<span
 			v-if="summary.prerelease"
