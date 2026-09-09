@@ -31,16 +31,19 @@ const nodes = computed(() => {
 });
 const hiddenCount = computed(() => Math.max(0, props.summary.breakdown.length - INITIAL_NODES));
 
-/** Only nodes that need an explanation: the plain "declared" and "nothing known" cases speak for themselves. */
+/** Only nodes that need an explanation; plain declared, verified and unknown states speak for themselves. */
 const notes = computed(() =>
 	[...nodes.value].reverse().filter((item) => {
-		if (item.cell.state === "declared") {
-			return false;
+		switch (item.cell.state) {
+			case "declared":
+				return false;
+			case "verified":
+				return item.cell.reason !== "verified by CI";
+			case "unverified":
+				return item.cell.reason !== "no requirement published" && item.cell.reason !== "no data";
+			default:
+				return true;
 		}
-		if (item.cell.state === "unverified") {
-			return item.cell.reason.startsWith("newer than");
-		}
-		return true;
 	}),
 );
 

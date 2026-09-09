@@ -177,6 +177,9 @@ function verifiedFor(
 			list.push(pair.toolchainVersion);
 		}
 	}
+	for (const list of Object.values(result)) {
+		list.sort((a, b) => semver.rcompare(semver.coerce(a) ?? "0.0.0", semver.coerce(b) ?? "0.0.0"));
+	}
 	return result;
 }
 
