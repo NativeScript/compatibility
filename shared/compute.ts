@@ -75,6 +75,7 @@ export function buildDocument(input: {
 				publishedAt: manifest.publishedAt,
 			};
 		}
+		inferFailures(versions);
 		packages[spec.name] = {
 			toolchains: spec.toolchains,
 			distTags: document.distTags,
@@ -90,6 +91,41 @@ export function buildDocument(input: {
 		packages,
 		advisories: input.overrides.advisories,
 	};
+}
+
+/**
+ * A confirmed failure on a newer release is taken to apply to every older
+ * release that has no result of its own for that toolchain version: what
+ * 9.1.1 cannot build with, 8.9.2 will not either.
+ */
+export function inferFailures(versions: Record<string, VersionCompatibility>): void {
+	const newestFirst = Object.keys(versions).sort(semver.rcompare);
+	const failingSince: Partial<Record<ToolchainKey, Record<string, string>>> = {};
+
+	for (const version of newestFirst) {
+		const entry = versions[version];
+		const inferred: VersionCompatibility["inferred"] = {};
+
+		for (const [key, byToolchain] of Object.entries(failingSince) as Array<[ToolchainKey, Record<string, string>]>) {
+			for (const [toolchainVersion, from] of Object.entries(byToolchain)) {
+				const ownResult =
+					entry.verified[key]?.some((v) => sameLine(v, toolchainVersion)) ||
+					entry.failed?.[key]?.some((v) => sameLine(v, toolchainVersion));
+				if (!ownResult) {
+					(inferred[key] ??= {})[toolchainVersion] = from;
+				}
+			}
+		}
+		if (Object.keys(inferred).length) {
+			entry.inferred = inferred;
+		}
+
+		for (const [key, list] of Object.entries(entry.failed ?? {}) as Array<[ToolchainKey, string[]]>) {
+			for (const toolchainVersion of list) {
+				(failingSince[key] ??= {})[toolchainVersion] ??= version;
+			}
+		}
+	}
 }
 
 /**
@@ -245,6 +281,12 @@ export function cellFor(
 	}
 	if (entry.failed?.[key]?.some((failed) => sameLine(failed, toolchainVersion))) {
 		return { state: "unsupported", reason: "build failed in two independent CI runs" };
+	}
+	const inferredFrom = Object.entries(entry.inferred?.[key] ?? {}).find(([failed]) =>
+		sameLine(failed, toolchainVersion),
+	)?.[1];
+	if (inferredFrom) {
+		return { state: "unsupported", reason: `assumed unsupported: ${packageName} ${inferredFrom} fails with it in CI` };
 	}
 	if (entry.suspect?.[key]?.some((failed) => sameLine(failed, toolchainVersion))) {
 		return { state: "unverified", reason: "one CI build failed; a second attempt is pending" };

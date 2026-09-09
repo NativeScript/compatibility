@@ -61,7 +61,9 @@ For a release and a toolchain version, in this order:
 2. **Verified**: a recorded CI build succeeded with that toolchain version.
    Any success outranks failures. A failure only marks the cell unsupported
    once a second, independent run has failed the same combination; a single
-   failure shows as unverified with a pending second attempt.
+   failure shows as unverified with a pending second attempt. A confirmed
+   failure on a newer release also marks older releases without a result of
+   their own as unsupported for that toolchain version.
 3. **Declared**: inside the range the package published under
    `nativescript.requirements`, or inside a maintainer override for releases
    that predate the block.

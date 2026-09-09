@@ -220,3 +220,39 @@ describe("latest supported", () => {
 		expect(summarizeCell(doc, "@nativescript/android", "9.1.1", "jdk").latestSupported?.version).not.toBe("17");
 	});
 });
+
+describe("inferred failures", () => {
+	it("cascade a confirmed failure to older releases without their own result", () => {
+		const build = (version: string, extra: object = {}) => ({
+			package: "@nativescript/android", version, toolchains: { jdk: "25" }, with: { nativescript: "9.1.1", node: "24" }, recordedAt: "2026-09-09T00:00:00Z", ...extra,
+		});
+		const doc = buildDocument({
+			generatedAt: "2026-09-09T00:00:00.000Z",
+			toolchains: { xcode: [], cocoapods: [], compileSdk: [], buildTools: [], jdk: [{ version: "25" }, { version: "21" }], node: [] },
+			packages: [
+				{
+					spec: { name: "@nativescript/android", toolchains: ["jdk"], keep: 5 },
+					document: {
+						distTags: {},
+						manifests: [{ version: "9.1.1" }, { version: "9.0.0" }, { version: "8.9.2" }, { version: "8.8.0" }].map((m) => ({ ...m, requirements: { jdk: ">=17" } })),
+					},
+				},
+			],
+			overrides: { requirements: [], advisories: [] },
+			verified: [
+				build("9.1.1", { outcome: "failure", attempts: 2 }),
+				build("8.9.2"),
+			],
+		});
+		expect(cellFor(doc, "@nativescript/android", "9.1.1", "jdk", "25").state).toBe("unsupported");
+		expect(cellFor(doc, "@nativescript/android", "9.0.0", "jdk", "25")).toMatchObject({
+			state: "unsupported",
+			reason: "assumed unsupported: @nativescript/android 9.1.1 fails with it in CI",
+		});
+		expect(cellFor(doc, "@nativescript/android", "8.9.2", "jdk", "25").state).toBe("verified");
+		expect(cellFor(doc, "@nativescript/android", "8.8.0", "jdk", "25").state).toBe("unsupported");
+		expect(cellFor(doc, "@nativescript/android", "9.0.0", "jdk", "21").state).toBe("declared");
+		expect(doc.packages["@nativescript/android"].versions["9.0.0"].inferred).toEqual({ jdk: { "25": "9.1.1" } });
+		expect(doc.packages["@nativescript/android"].versions["9.1.1"].inferred).toBeUndefined();
+	});
+});

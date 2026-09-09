@@ -118,6 +118,16 @@
 											"type": "string"
 										}
 									}
+								},
+								"inferred": {
+									"type": "object",
+									"description": "Toolchain versions assumed unsupported because a newer release of the package failed with them in CI and this release has no result of its own; maps toolchain version to that newer release.",
+									"additionalProperties": {
+										"type": "object",
+										"additionalProperties": {
+											"type": "string"
+										}
+									}
 								}
 							}
 						}

@@ -41,6 +41,12 @@ export interface VersionCompatibility {
 	failed?: Partial<Record<ToolchainKey, string[]>>;
 	/** Toolchain versions with a single CI failure, awaiting a second attempt, per key. */
 	suspect?: Partial<Record<ToolchainKey, string[]>>;
+	/**
+	 * Toolchain versions assumed unsupported because a newer release failed
+	 * with them and this release has no result of its own; maps the toolchain
+	 * version to that newer release.
+	 */
+	inferred?: Partial<Record<ToolchainKey, Record<string, string>>>;
 	publishedAt?: string;
 }
 
