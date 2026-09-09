@@ -2,7 +2,7 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$id": "https://compatibility.nativescript.org/v1/schemas/verified.json",
 	"title": "CI build result",
-	"description": "One pinned build of a runtime version with its toolchain versions, CLI version and Node.js major, and whether it succeeded. Stored under data/verified/<package>/ as <timestamp>_<version>_<pinned versions>.json; CI only ever adds files, and a combination recorded once, whatever the outcome, is never rebuilt.",
+	"description": "One pinned build of a runtime version with its toolchain versions, CLI version and Node.js major, and its outcome. Stored under data/verified/<package>/ as <timestamp>_<version>_<pinned versions>.json. A success is final. A failure is suspect until a second, independent run fails the same combination (attempts >= 2); a later success outranks any failure.",
 	"type": "object",
 	"required": [
 		"package",
@@ -79,6 +79,15 @@
 			],
 			"default": "success",
 			"description": "Omitted means success."
+		},
+		"attempts": {
+			"type": "integer",
+			"minimum": 1,
+			"description": "For failures: how many independent runs have failed this combination, this one included."
+		},
+		"signature": {
+			"type": "string",
+			"description": "The last recognisable error line of the failed build."
 		}
 	}
 }

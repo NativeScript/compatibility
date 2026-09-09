@@ -37,8 +37,10 @@ export interface VersionCompatibility {
 	source: RequirementSource;
 	/** Toolchain versions a CI build proved to work, per key. */
 	verified: Partial<Record<ToolchainKey, string[]>>;
-	/** Toolchain versions a CI build failed with, per key. */
+	/** Toolchain versions whose builds failed in two independent CI runs, per key. */
 	failed?: Partial<Record<ToolchainKey, string[]>>;
+	/** Toolchain versions with a single CI failure, awaiting a second attempt, per key. */
+	suspect?: Partial<Record<ToolchainKey, string[]>>;
 	publishedAt?: string;
 }
 
@@ -105,6 +107,10 @@ export interface VerificationResult {
 	with: { nativescript: string; node: string };
 	/** Omitted means success. */
 	outcome?: "success" | "failure";
+	/** For failures: independent runs that failed this combination, this one included. */
+	attempts?: number;
+	/** The last recognisable error line of a failed build. */
+	signature?: string;
 	resolved?: Record<string, string>;
 	/** Workflow run or job URL that proved it. */
 	evidence?: string;

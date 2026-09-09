@@ -21,15 +21,42 @@ export function resultPath(result, date = new Date()) {
 	return new URL(`${result.package}/${timestamp(date)}_${result.version}_${resultKey(result.toolchains, result.with)}.json`, ROOT);
 }
 
-export function findRecorded(results, candidate) {
-	return results.find(
-		(result) =>
-			result.package === candidate.package &&
-			result.version === candidate.version &&
-			result.with.nativescript === candidate.with.nativescript &&
-			result.with.node === candidate.with.node &&
-			resultKey(result.toolchains, {}) === resultKey(candidate.toolchains, {}),
+/** Toolchains recorded for the record but chosen by the job, not by the matrix. */
+const INCIDENTAL = new Set(["cocoapods", "buildTools"]);
+
+function controlled(toolchains) {
+	return Object.fromEntries(Object.entries(toolchains).filter(([key]) => !INCIDENTAL.has(key)));
+}
+
+/** Records of the same pinned combination, ignoring incidental toolchains. */
+export function sameCombination(a, b) {
+	return (
+		a.package === b.package &&
+		a.version === b.version &&
+		a.with.nativescript === b.with.nativescript &&
+		a.with.node === b.with.node &&
+		resultKey(controlled(a.toolchains), {}) === resultKey(controlled(b.toolchains), {})
 	);
+}
+
+/**
+ * How a combination stands: "success" if any run built it, "confirmed" after
+ * two independent failures, "suspect" after one, or null if never recorded.
+ */
+export function status(results, candidate) {
+	const matching = results.filter((result) => sameCombination(result, candidate));
+	if (!matching.length) {
+		return null;
+	}
+	if (matching.some((result) => (result.outcome ?? "success") === "success")) {
+		return "success";
+	}
+	const attempts = Math.max(...matching.map((result) => result.attempts ?? 1));
+	return attempts >= 2 ? "confirmed" : "suspect";
+}
+
+export function failedAttempts(results, candidate) {
+	return results.filter((result) => sameCombination(result, candidate) && result.outcome === "failure").length;
 }
 
 export function readResults() {

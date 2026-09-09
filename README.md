@@ -40,9 +40,9 @@ as a browser-support-style matrix (Vue + Vite) for people.
 2. **Build jobs**: one job per combination installs the pinned CLI and
    Node.js, creates a fresh app, builds it with the pinned runtime and
    toolchain, and writes its result file under `data/verified/` whether it
-   passed or failed. A success proves the runtime's toolchain cells and the
-   CLI's Node.js cell; a failure marks the toolchain cells unsupported. Either
-   way the combination is never rebuilt.
+   passed or failed, with the last error line as a signature. A success is
+   final. A failure is suspect until a later run fails the same combination
+   again on another runner, which confirms it; a success in between clears it.
 3. **Collect**: the artifacts are dropped onto the checkout and committed to
    the default branch. Every file names the run that produced it, so the
    commit is the audit trail; nothing needs a manual merge.
@@ -59,7 +59,9 @@ For a release and a toolchain version, in this order:
 1. **Unsupported / Advisory**: a maintainer advisory matches the release and
    the toolchain version.
 2. **Verified**: a recorded CI build succeeded with that toolchain version.
-   A recorded CI failure marks the cell unsupported instead.
+   Any success outranks failures. A failure only marks the cell unsupported
+   once a second, independent run has failed the same combination; a single
+   failure shows as unverified with a pending second attempt.
 3. **Declared**: inside the range the package published under
    `nativescript.requirements`, or inside a maintainer override for releases
    that predate the block.

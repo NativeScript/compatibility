@@ -101,7 +101,17 @@
 								},
 								"failed": {
 									"type": "object",
-									"description": "Toolchain versions a CI build failed with, per key.",
+									"description": "Toolchain versions whose builds failed in two independent CI runs, per key.",
+									"additionalProperties": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									}
+								},
+								"suspect": {
+									"type": "object",
+									"description": "Toolchain versions with a single CI failure, awaiting a second attempt, per key.",
 									"additionalProperties": {
 										"type": "array",
 										"items": {

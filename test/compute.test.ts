@@ -159,10 +159,10 @@ describe("collectOverrides", () => {
 });
 
 describe("failed builds", () => {
-	it("mark the toolchain cell unsupported but say nothing about the CLI's Node.js support", () => {
-		const doc = buildDocument({
+	const doc = () =>
+		buildDocument({
 			generatedAt: "2026-09-09T00:00:00.000Z",
-			toolchains: { xcode: [], cocoapods: [], compileSdk: [], buildTools: [], jdk: [{ version: "25" }, { version: "21" }], node: [{ version: "24.0.0" }] },
+			toolchains: { xcode: [], cocoapods: [], compileSdk: [], buildTools: [], jdk: [{ version: "25" }, { version: "21" }, { version: "17" }], node: [{ version: "24.0.0" }] },
 			packages: [
 				{
 					spec: { name: "@nativescript/android", toolchains: ["jdk"], keep: 5 },
@@ -175,13 +175,22 @@ describe("failed builds", () => {
 			],
 			overrides: { requirements: [], advisories: [] },
 			verified: [
-				{ package: "@nativescript/android", version: "9.1.1", toolchains: { jdk: "25" }, with: { nativescript: "9.1.1", node: "24" }, outcome: "failure", recordedAt: "2026-09-09T00:00:00Z" },
-				{ package: "@nativescript/android", version: "9.1.1", toolchains: { jdk: "21" }, with: { nativescript: "9.1.1", node: "24" }, recordedAt: "2026-09-09T00:00:00Z" },
+				{ package: "@nativescript/android", version: "9.1.1", toolchains: { jdk: "25" }, with: { nativescript: "9.1.1", node: "24" }, outcome: "failure", attempts: 2, recordedAt: "2026-09-09T00:00:00Z" },
+				{ package: "@nativescript/android", version: "9.1.1", toolchains: { jdk: "21" }, with: { nativescript: "9.1.1", node: "24" }, outcome: "failure", attempts: 1, recordedAt: "2026-09-09T00:00:00Z" },
+				{ package: "@nativescript/android", version: "9.1.1", toolchains: { jdk: "17" }, with: { nativescript: "9.1.0", node: "24" }, outcome: "failure", attempts: 1, recordedAt: "2026-09-09T00:00:00Z" },
+				{ package: "@nativescript/android", version: "9.1.1", toolchains: { jdk: "17" }, with: { nativescript: "9.1.1", node: "24" }, recordedAt: "2026-09-09T00:00:00Z" },
 			],
 		});
-		expect(cellFor(doc, "@nativescript/android", "9.1.1", "jdk", "25")).toMatchObject({ state: "unsupported", reason: "build failed in CI" });
-		expect(cellFor(doc, "@nativescript/android", "9.1.1", "jdk", "21").state).toBe("verified");
-		expect(doc.packages["nativescript"].versions["9.1.1"].verified).toEqual({ node: ["24"] });
-		expect(doc.packages["@nativescript/android"].versions["9.1.1"].failed).toEqual({ jdk: ["25"] });
+
+	it("only a failure confirmed by two runs marks a cell unsupported", () => {
+		expect(cellFor(doc(), "@nativescript/android", "9.1.1", "jdk", "25")).toMatchObject({ state: "unsupported", reason: "build failed in two independent CI runs" });
+		expect(cellFor(doc(), "@nativescript/android", "9.1.1", "jdk", "21")).toMatchObject({ state: "unverified", reason: "one CI build failed; a second attempt is pending" });
+	});
+
+	it("a success outranks a sibling failure and only successes prove the CLI's Node.js support", () => {
+		expect(cellFor(doc(), "@nativescript/android", "9.1.1", "jdk", "17")).toMatchObject({ state: "verified", reason: "verified by CI (one other attempt failed)" });
+		expect(doc().packages["nativescript"].versions["9.1.1"].verified).toEqual({ node: ["24"] });
+		expect(doc().packages["@nativescript/android"].versions["9.1.1"].failed).toEqual({ jdk: ["25"] });
+		expect(doc().packages["@nativescript/android"].versions["9.1.1"].suspect).toEqual({ jdk: ["21", "17"] });
 	});
 });

@@ -63,12 +63,15 @@ export function buildDocument(input: {
 				manifest.requirements,
 				input.overrides,
 			);
-			const failed = verifiedFor(spec.name, manifest.version, input.verified, "failure");
+			const verified = verifiedFor(spec.name, manifest.version, input.verified, "success");
+			const failed = verifiedFor(spec.name, manifest.version, input.verified, "confirmed");
+			const suspect = verifiedFor(spec.name, manifest.version, input.verified, "suspect");
 			versions[manifest.version] = {
 				requirements: requirements.ranges,
 				source: requirements.source,
-				verified: verifiedFor(spec.name, manifest.version, input.verified, "success"),
+				verified,
 				...(Object.keys(failed).length ? { failed } : {}),
+				...(Object.keys(suspect).length ? { suspect } : {}),
 				publishedAt: manifest.publishedAt,
 			};
 		}
@@ -116,16 +119,27 @@ export function effectiveRequirements(
 	return { ranges, source };
 }
 
+export type ResultClass = "success" | "confirmed" | "suspect";
+
+/** A failure counts once a second independent run has failed the same combination. */
+export function classify(entry: VerificationResult): ResultClass {
+	if ((entry.outcome ?? "success") === "success") {
+		return "success";
+	}
+	return (entry.attempts ?? 1) >= 2 ? "confirmed" : "suspect";
+}
+
 /**
- * A result proves every toolchain it pinned for the runtime it built, and the
- * Node.js major for the CLI it built with.
+ * A successful result proves every toolchain it pinned for the runtime it
+ * built, and the Node.js major for the CLI it built with. A failure only
+ * speaks about the runtime's toolchains.
  */
 export function verifiedPairs(
 	verified: VerificationResult[],
-	outcome: "success" | "failure" = "success",
+	outcome: ResultClass = "success",
 ): Array<{ package: string; version: string; toolchain: ToolchainKey; toolchainVersion: string }> {
 	return verified
-		.filter((entry) => (entry.outcome ?? "success") === outcome)
+		.filter((entry) => classify(entry) === outcome)
 		.flatMap((entry) => [
 			...Object.entries(entry.toolchains).map(([toolchain, toolchainVersion]) => ({
 				package: entry.package,
@@ -151,7 +165,7 @@ function verifiedFor(
 	packageName: string,
 	version: string,
 	verified: VerificationResult[],
-	outcome: "success" | "failure",
+	outcome: ResultClass,
 ): VersionCompatibility["verified"] {
 	const result: VersionCompatibility["verified"] = {};
 	for (const pair of verifiedPairs(verified, outcome)) {
@@ -221,11 +235,16 @@ export function cellFor(
 		};
 	}
 
+	// Any success outranks failures: a combination that built once builds.
 	if (entry.verified[key]?.some((verified) => sameLine(verified, toolchainVersion))) {
-		return { state: "verified", reason: "verified by CI" };
+		const alsoFailed = entry.suspect?.[key]?.some((failed) => sameLine(failed, toolchainVersion));
+		return { state: "verified", reason: alsoFailed ? "verified by CI (one other attempt failed)" : "verified by CI" };
 	}
 	if (entry.failed?.[key]?.some((failed) => sameLine(failed, toolchainVersion))) {
-		return { state: "unsupported", reason: "build failed in CI" };
+		return { state: "unsupported", reason: "build failed in two independent CI runs" };
+	}
+	if (entry.suspect?.[key]?.some((failed) => sameLine(failed, toolchainVersion))) {
+		return { state: "unverified", reason: "one CI build failed; a second attempt is pending" };
 	}
 
 	const range = entry.requirements[key];

@@ -112,7 +112,8 @@ jobs:
           cd compat
           npm install @nativescript/ios@${{ matrix.runtime }} --save-dev
           # One retry before a failure is recorded: a runner hiccup must not become a permanent verdict.
-          ns build ios --disableAnalytics || ns build ios --disableAnalytics
+          set -o pipefail
+          (ns build ios --disableAnalytics || ns build ios --disableAnalytics) 2>&1 | tee ../build.log
       - name: Record result
         # A pinned combination that failed is as final as one that passed: record it so it is never rebuilt.
         if: always() && steps.build.outcome != 'skipped'
@@ -121,7 +122,7 @@ jobs:
             --toolchain xcode=${{ matrix.xcode }} --toolchain cocoapods="$(pod --version)" \
             --with nativescript=${{ matrix.cli }} --with node=${{ matrix.node }} \
             --resolved node="$(node --version | tr -d v)" --resolved xcode="$(xcodebuild -version | head -1 | cut -d' ' -f2)" \
-            --outcome ${{ steps.build.outcome }} \
+            --outcome ${{ steps.build.outcome }} --signature "$(grep -aE 'error|FAILURE|failed' build.log | grep -viE 'warning|deprecat' | tail -1)" \
             --evidence "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       - uses: actions/upload-artifact@v4
         if: always() && steps.build.outcome != 'skipped'
@@ -160,7 +161,8 @@ jobs:
           ns create compat --tsc --disableAnalytics
           cd compat
           npm install @nativescript/android@${{ matrix.runtime }} --save-dev
-          ns build android --compileSdk ${{ matrix.compileSdk }} --disableAnalytics || ns build android --compileSdk ${{ matrix.compileSdk }} --disableAnalytics
+          set -o pipefail
+          (ns build android --compileSdk ${{ matrix.compileSdk }} --disableAnalytics || ns build android --compileSdk ${{ matrix.compileSdk }} --disableAnalytics) 2>&1 | tee ../build.log
       - name: Record result
         if: always() && steps.build.outcome != 'skipped'
         run: |
@@ -168,7 +170,7 @@ jobs:
             --toolchain compileSdk=${{ matrix.compileSdk }} --toolchain buildTools=${{ matrix.buildTools }} --toolchain jdk=${{ matrix.jdk }} \
             --with nativescript=${{ matrix.cli }} --with node=${{ matrix.node }} \
             --resolved node="$(node --version | tr -d v)" --resolved jdk="$(java -version 2>&1 | head -1 | cut -d'"' -f2)" \
-            --outcome ${{ steps.build.outcome }} \
+            --outcome ${{ steps.build.outcome }} --signature "$(grep -aE 'error|FAILURE|failed' build.log | grep -viE 'warning|deprecat' | tail -1)" \
             --evidence "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       - uses: actions/upload-artifact@v4
         if: always() && steps.build.outcome != 'skipped'

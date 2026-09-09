@@ -13,7 +13,7 @@
 // MANUAL_XCODE or MANUAL_COMPILE_SDK + MANUAL_JDK. MANUAL_FORCE=true rebuilds
 // a combination that is already recorded.
 import { appendFileSync } from "node:fs";
-import { readResults } from "./lib/results.mjs";
+import { readResults, status } from "./lib/results.mjs";
 
 const REGISTRY = "https://registry.npmjs.org/";
 const XCODE_FEED = "https://xcodereleases.com/data.json";
@@ -190,19 +190,12 @@ async function jdkReleases() {
 
 const recorded = readResults();
 
-// A result counts when its pins match and it covers at least the toolchains
-// the matrix controls; jobs also record incidental versions such as CocoaPods.
+// A success is final and a failure confirmed by two independent runs is
+// final; a single failure stays eligible so a later run can retry it on a
+// different runner.
 function isRecorded(candidate) {
-	return recorded.some(
-		(result) =>
-			result.package === candidate.package &&
-			result.version === candidate.version &&
-			result.with.nativescript === candidate.with.nativescript &&
-			result.with.node === candidate.with.node &&
-			Object.entries(candidate.toolchains).every(
-				([key, version]) => result.toolchains[key] !== undefined && sameLine(result.toolchains[key], version),
-			),
-	);
+	const current = status(recorded, candidate);
+	return current === "success" || current === "confirmed";
 }
 
 function emit(matrix) {
