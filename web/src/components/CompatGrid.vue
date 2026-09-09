@@ -111,7 +111,13 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 						:colspan="ALL_KEYS.length + 1"
 						class="border-b border-neutral-200 bg-sky-50/70 px-6 py-2 text-left font-semibold dark:border-neutral-700/80 dark:bg-sky-900/25"
 					>
-						<code>{{ group.name }}</code>
+						<a
+							:href="`https://www.npmjs.com/package/${group.name}`"
+							target="_blank"
+							rel="noopener"
+							class="hover:text-declared hover:underline"
+							:title="`${group.name} on npm`"
+						><code>{{ group.name }}</code></a>
 						<span class="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-400">{{ group.total }} releases</span>
 					</th>
 				</tr>
@@ -122,7 +128,13 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 							:class="border"
 							class="px-6 py-3 text-left align-top font-medium group-hover:bg-neutral-50 dark:group-hover:bg-neutral-800/70"
 						>
-							<code>{{ version }}</code>
+							<a
+								:href="`https://www.npmjs.com/package/${group.name}/v/${version}`"
+								target="_blank"
+								rel="noopener"
+								class="hover:text-declared hover:underline"
+								:title="`${group.name}@${version} on npm`"
+							><code>{{ version }}</code></a>
 							<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
 								<span
 									v-for="tag in group.tags.get(version) ?? []"
