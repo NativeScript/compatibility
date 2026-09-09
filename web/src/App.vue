@@ -53,7 +53,17 @@ function label(key: string): string {
 			<a class="text-declared hover:underline" href="/v1/compatibility.json">JSON</a>
 			<a class="text-declared hover:underline" href="/v1/schemas/package.json">Schema</a>
 			<span v-if="generated" class="text-neutral-500 dark:text-neutral-400">
-				Updated {{ generated }}<template v-if="document?.build"> · build {{ document.build }}</template>
+				Updated {{ generated }}
+				<template v-if="document?.build">
+					· build
+					<a
+						v-if="/^[0-9a-f]{7,40}$/.test(document.build)"
+						:href="`https://github.com/NativeScript/compatibility/commit/${document.build}`"
+						class="text-declared hover:underline"
+						:title="`Commit ${document.build} on GitHub`"
+					><code>{{ document.build }}</code></a>
+					<code v-else>{{ document.build }}</code>
+				</template>
 			</span>
 		</nav>
 		<div class="mt-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
