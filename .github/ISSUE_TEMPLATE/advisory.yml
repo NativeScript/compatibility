@@ -1,0 +1,57 @@
+name: Report a break (advisory)
+description: A toolchain release broke existing NativeScript releases and people should be warned.
+title: "[advisory] <toolchain> <version> breaks <package> <versions>"
+labels: ["advisory"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A confirmed advisory becomes a file under `data/overrides/` and shows up on the site and in `ns doctor` for everyone on the affected versions.
+  - type: input
+    id: package
+    attributes:
+      label: Affected package and versions
+      description: A semver range of the releases that break.
+      placeholder: "@nativescript/ios <9.2.0"
+    validations:
+      required: true
+  - type: input
+    id: condition
+    attributes:
+      label: Toolchain condition
+      description: Which toolchain versions trigger it, as a range.
+      placeholder: "Xcode >=27"
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Builds fail (error)
+        - Builds succeed but something is broken (warning)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: The error or misbehaviour, with the exact message where there is one.
+    validations:
+      required: true
+  - type: input
+    id: fix
+    attributes:
+      label: Known fix or workaround
+      placeholder: "Update to @nativescript/ios 9.2.0"
+  - type: input
+    id: link
+    attributes:
+      label: Related issue or discussion
+      placeholder: "https://github.com/NativeScript/ios/issues/…"
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Output of `ns doctor --markdown` or `npx nativescript-envinfo`.
+      render: markdown

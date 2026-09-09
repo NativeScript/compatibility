@@ -1,0 +1,81 @@
+name: Wrong compatibility data
+description: A cell on compatibility.nativescript.org does not match reality.
+title: "[data] <package> <version> with <toolchain> <version>"
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks. A confirmed report becomes a file under `data/overrides/` or `data/verified/`, so the more precise the versions, the faster it lands.
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - "@nativescript/ios"
+        - "@nativescript/android"
+        - "@nativescript/visionos"
+        - "nativescript (CLI)"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: "9.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: toolchain
+    attributes:
+      label: Toolchain
+      options:
+        - Xcode
+        - CocoaPods
+        - Android compile SDK
+        - Android build-tools
+        - JDK
+        - Node.js
+    validations:
+      required: true
+  - type: input
+    id: toolchain-version
+    attributes:
+      label: Toolchain version
+      placeholder: "26.4, 37, 21, 24.2.0…"
+    validations:
+      required: true
+  - type: dropdown
+    id: shown
+    attributes:
+      label: What the site shows
+      options:
+        - Verified by CI
+        - Declared
+        - Unverified
+        - Advisory
+        - Unsupported
+    validations:
+      required: true
+  - type: dropdown
+    id: reality
+    attributes:
+      label: What is actually true
+      options:
+        - It builds and runs fine
+        - The build fails
+        - It builds but the app misbehaves at runtime
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: The failing command and its error, a CI run, or anything else that shows the outcome. Paste logs as-is.
+      render: shell
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Output of `ns doctor --markdown` (NativeScript CLI 9.2 or newer) or `npx nativescript-envinfo`.
+      render: markdown

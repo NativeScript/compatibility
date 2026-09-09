@@ -48,7 +48,7 @@ function label(key: string): string {
 			verification runs and maintainer advisories. Click a cell for the version-by-version picture.
 		</p>
 		<nav class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-			<a class="text-declared hover:underline" href="https://github.com/NativeScript/compatibility/issues/new">Report a problem</a>
+			<a class="text-declared hover:underline" href="https://github.com/NativeScript/compatibility/issues/new/choose">Report a problem</a>
 			<a class="text-declared hover:underline" href="https://github.com/NativeScript/compatibility">Data on GitHub</a>
 			<a class="text-declared hover:underline" href="/v1/compatibility.json">JSON</a>
 			<a class="text-declared hover:underline" href="/v1/schemas/package.json">Schema</a>

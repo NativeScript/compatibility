@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: The compatibility matrix
+    url: https://compatibility.nativescript.org
+    about: The live site this repository produces.
+  - name: NativeScript CLI issues
+    url: https://github.com/NativeScript/nativescript-cli/issues
+    about: Problems with ns doctor, builds or the CLI itself belong there.

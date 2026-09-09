@@ -11,7 +11,7 @@ metadata, CI builds and maintainer advisories, serves it as JSON for tools such
 as [`ns doctor`](https://github.com/NativeScript/nativescript-cli), and renders
 it as a browser-support-style matrix for people.
 
-Found a wrong cell? [Open an issue](https://github.com/NativeScript/compatibility/issues/new).
+Found a wrong cell? [Open an issue](https://github.com/NativeScript/compatibility/issues/new/choose).
 Toolchain requirements for a runtime belong in its `package.json` (see below);
 everything else lives in [`data/`](data).
 
