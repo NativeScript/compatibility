@@ -243,6 +243,17 @@ jobs:
         run: |
           npm ci
           npx vite build
+      # The results commit is what gets deployed, so the version is labelled with
+      # it rather than with the commit that started the run. The action runs every
+      # line of `command` as its own wrangler call, so only the subject may go into
+      # the message, and never a quote.
+      - id: commit
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "subject=$(git log -1 --pretty=%s | tr -d '"')" >> "$GITHUB_OUTPUT"
       - uses: cloudflare/wrangler-action@v3
         if: env.CLOUDFLARE_API_TOKEN != ''
         env:
@@ -252,5 +263,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # Shown in the dashboard's version list: which commit, and which workflow run shipped it.
           command: >-
-            deploy --tag "${{ github.sha }}"
-            --message "${{ github.workflow }} #${{ github.run_number }}: ${{ github.event.head_commit.message || github.ref_name }}"
+            deploy --tag "${{ steps.commit.outputs.sha }}"
+            --message "${{ github.workflow }} #${{ github.run_number }}: ${{ steps.commit.outputs.subject }}"
