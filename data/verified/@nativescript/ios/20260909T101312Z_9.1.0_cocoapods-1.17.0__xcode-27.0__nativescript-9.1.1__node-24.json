@@ -1,0 +1,19 @@
+{
+	"$schema": "https://compatibility.nativescript.org/v1/schemas/verified.json",
+	"package": "@nativescript/ios",
+	"version": "9.1.0",
+	"toolchains": {
+		"xcode": "27.0",
+		"cocoapods": "1.17.0"
+	},
+	"with": {
+		"nativescript": "9.1.1",
+		"node": "24"
+	},
+	"resolved": {
+		"node": "24.20.0",
+		"xcode": "27.0"
+	},
+	"evidence": "https://github.com/NativeScript/compatibility/actions/runs/34338851713",
+	"recordedAt": "2026-09-09T10:13:12.184Z"
+}
