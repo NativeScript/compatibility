@@ -52,7 +52,9 @@ function label(key: string): string {
 			<a class="text-declared hover:underline" href="https://github.com/NativeScript/compatibility">Data on GitHub</a>
 			<a class="text-declared hover:underline" href="/v1/compatibility.json">JSON</a>
 			<a class="text-declared hover:underline" href="/v1/schemas/package.json">Schema</a>
-			<span v-if="generated" class="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">Updated {{ generated }}</span>
+			<span v-if="generated" class="text-neutral-500 dark:text-neutral-400">
+				Updated {{ generated }}<template v-if="document?.build"> · build {{ document.build }}</template>
+			</span>
 		</nav>
 		<div class="mt-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
 			<div class="flex flex-wrap items-center gap-5">
