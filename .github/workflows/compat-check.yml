@@ -212,3 +212,20 @@ jobs:
             git pull --rebase
           done
           exit 1
+      # Commits made with the Actions token do not trigger the deploy
+      # workflow, so the results are deployed from here.
+      - name: Deploy
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          npm ci
+          npx vite build
+      - uses: cloudflare/wrangler-action@v3
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

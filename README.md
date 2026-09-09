@@ -104,3 +104,19 @@ npm run build       # client and Worker into dist/, with a generated wrangler.js
 npm run deploy      # build, then wrangler deploy
 npm test && npm run check
 ```
+
+## Deploying
+
+One-time setup:
+
+1. `npx wrangler login`, then `npx wrangler kv namespace create COMPAT_KV` and
+   paste the printed id into `wrangler.jsonc`.
+2. Add two repository secrets: `CLOUDFLARE_API_TOKEN` (an API token created
+   from the "Edit Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID`.
+3. For the custom domain, uncomment the `routes` entry in `wrangler.jsonc`
+   once the `nativescript.org` zone lives on that account.
+
+After that, the `deploy` workflow deploys every push to `main` that touches
+deployable files, and `compat-check` deploys the results it records. From a
+machine that is logged in, `npm run deploy` does the same by hand. The hourly
+cron trigger is part of the deployment.

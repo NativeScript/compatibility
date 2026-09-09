@@ -1,0 +1,48 @@
+# Deploys the Worker and the app to Cloudflare on every push to the default
+# branch that touches something deployable. Needs two repository secrets:
+#   CLOUDFLARE_API_TOKEN   an API token with the "Edit Cloudflare Workers" template
+#   CLOUDFLARE_ACCOUNT_ID  the account that owns the Worker
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "worker/**"
+      - "shared/**"
+      - "web/**"
+      - "data/**"
+      - "schemas/**"
+      - "index.html"
+      - "vite.config.ts"
+      - "wrangler.jsonc"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run check
+      - run: npx vite build
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
