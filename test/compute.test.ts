@@ -121,13 +121,14 @@ describe("summarizeCell", () => {
 		expect(cell.range).toBe("16 – 26");
 		expect(cell.verified).toEqual(["26.2"]);
 		expect(cell.advisories.map((a) => a.id)).toEqual(["ios-xcode-27"]);
-		expect(cell.latestCovered).toBe(true);
+		expect(cell.latest).toMatchObject({ version: "26.3", cell: { state: "declared" } });
+		expect(cell.prerelease).toMatchObject({ version: "27.0", cell: { state: "unsupported" } });
 		expect(cell.breakdown.map((b) => b.cell.state)).toEqual(["unsupported", "declared", "verified", "declared"]);
 
 		const unknown = summarizeCell(doc, "@nativescript/ios", "8.9.0", "cocoapods");
 		expect(unknown.state).toBe("unverified");
 		expect(unknown.range).toBe("");
-		expect(unknown.latestCovered).toBeUndefined();
+		expect(unknown.latest).toBeUndefined();
 	});
 });
 

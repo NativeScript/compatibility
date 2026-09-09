@@ -90,6 +90,8 @@ jobs:
         include: ${{ fromJson(needs.matrix.outputs.ios) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -141,6 +143,8 @@ jobs:
         include: ${{ fromJson(needs.matrix.outputs.android) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

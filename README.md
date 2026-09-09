@@ -70,8 +70,9 @@ For a release and a toolchain version, in this order:
    feeds, so a fresh release shows up as unverified the day it ships.
 5. **Unsupported**: below the declared minimum.
 
-The matrix shows the declared range per cell; clicking a cell expands a
-per-version timeline; hovering shows a summary with advisories.
+Each cell shows how the release fares with the newest stable version of
+that toolchain, plus a newer beta when one exists; clicking a cell expands
+the per-version timeline with the declared range and every older version.
 
 ## Endpoints
 

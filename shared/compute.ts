@@ -284,8 +284,10 @@ export interface CellSummary {
 	advisories: Advisory[];
 	/** State of every known toolchain version, newest first, for the detail view. */
 	breakdown: Array<{ version: string; prerelease?: boolean; cell: Cell }>;
-	/** Whether the newest stable toolchain version is covered by the declared range. */
-	latestCovered: boolean | undefined;
+	/** The newest stable toolchain version and how this package version fares with it. */
+	latest?: { version: string; cell: Cell };
+	/** A prerelease toolchain newer than `latest`, when one is known. */
+	prerelease?: { version: string; cell: Cell };
 }
 
 /**
@@ -313,7 +315,10 @@ export function summarizeCell(
 		prerelease: tool.prerelease,
 		cell: cellFor(document, packageName, version, key, tool.version),
 	}));
-	const latestStable = document.toolchains[key].find((tool) => !tool.prerelease);
+	const latest = breakdown.find((item) => !item.prerelease);
+	const prerelease = breakdown.find(
+		(item) => item.prerelease && (!latest || breakdown.indexOf(item) < breakdown.indexOf(latest)),
+	);
 
 	return {
 		state: verified.length ? "verified" : rawRange ? "declared" : "unverified",
@@ -323,8 +328,8 @@ export function summarizeCell(
 		verified,
 		advisories,
 		breakdown,
-		latestCovered:
-			rawRange && latestStable ? inRange(latestStable.version, rawRange) : undefined,
+		...(latest ? { latest: { version: latest.version, cell: latest.cell } } : {}),
+		...(prerelease ? { prerelease: { version: prerelease.version, cell: prerelease.cell } } : {}),
 	};
 }
 
