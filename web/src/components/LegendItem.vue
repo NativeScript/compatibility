@@ -11,7 +11,8 @@ const POPOVER_WIDTH = 256;
 const MARGIN = 8;
 
 const button = ref<HTMLElement | null>(null);
-const align = ref<"center" | "left" | "right">("center");
+// Right-anchored while hidden so the invisible panel never widens the page; placed properly on hover.
+const align = ref<"center" | "left" | "right">("right");
 
 /** Keeps the popover inside the viewport by anchoring it to whichever edge has room. */
 function place() {
