@@ -16,9 +16,14 @@ export function timestamp(date = new Date()) {
 	return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
 
-/** New files are timestamped so a folder lists in recording order; content decides whether a tuple is already recorded. */
+/**
+ * Timestamped so a folder lists in recording order, and suffixed by outcome so
+ * a success and a failure of one combination can never share a file name.
+ * Content, not the name, decides whether a combination is already recorded.
+ */
 export function resultPath(result, date = new Date()) {
-	return new URL(`${result.package}/${timestamp(date)}_${result.version}_${resultKey(result.toolchains, result.with)}.json`, ROOT);
+	const suffix = result.outcome === "failure" ? "_failure" : "";
+	return new URL(`${result.package}/${timestamp(date)}_${result.version}_${resultKey(result.toolchains, result.with)}${suffix}.json`, ROOT);
 }
 
 /** Toolchains recorded for the record but chosen by the job, not by the matrix. */

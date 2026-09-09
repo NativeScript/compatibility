@@ -42,6 +42,7 @@ describe("data files", () => {
 			expect(valid).toBe(true);
 			expect(file.startsWith(`../data/verified/${result.package}/`)).toBe(true);
 			expect(file.split("/").pop()).toMatch(STAMP);
+			expect(file.endsWith("_failure.json")).toBe(result.outcome === "failure");
 		}
 	});
 
