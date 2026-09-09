@@ -50,7 +50,7 @@ const background = computed(() => {
 
 <template>
 	<td
-		class="relative cursor-pointer px-3 pt-3.5 pb-2.5 text-center align-top transition-colors outline-none focus-visible:ring-2 focus-visible:ring-declared/50 focus-visible:ring-inset"
+		class="relative cursor-pointer px-3 pt-3.5 pb-6 text-center align-top transition-colors outline-none focus-visible:ring-2 focus-visible:ring-declared/50 focus-visible:ring-inset"
 		:class="background"
 		tabindex="0"
 		:title="`${STATE_HELP[state]} ${open ? 'Click to collapse.' : 'Click for details.'}`"
@@ -58,26 +58,29 @@ const background = computed(() => {
 		@keydown.enter.prevent="emit('toggle')"
 		@keydown.space.prevent="emit('toggle')"
 	>
-		<StateIcon :state="state" :size="22" class="mx-auto" />
-		<span class="mt-1 block tabular-nums" :class="TEXT[state]">{{ primary?.version ?? "No data" }}</span>
-		<span
-			v-if="secondary"
-			class="mt-0.5 flex items-center justify-center gap-1 text-[11px] tabular-nums"
-			:title="`${secondary.version}: ${secondary.cell.reason}`"
-		>
-			<StateIcon :state="secondary.cell.state" :size="12" />
-			<span class="font-medium" :class="TEXT[secondary.cell.state]">{{ secondary.version }}</span>
-			<span class="text-neutral-500 dark:text-neutral-400">{{ SECONDARY_LABEL[secondary.cell.state] }}</span>
-		</span>
-		<span
-			v-if="summary.prerelease"
-			class="mt-0.5 flex items-center justify-center gap-1 text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400"
-			:title="`${summary.prerelease.version} beta: ${summary.prerelease.cell.reason}`"
-		>
-			<StateIcon :state="summary.prerelease.cell.state" :size="12" />
-			{{ summary.prerelease.version }}
-			<BetaChip />
-		</span>
+		<!-- The label hides when the column is narrower than the line. -->
+		<div class="@container">
+			<StateIcon :state="state" :size="22" class="mx-auto" />
+			<span class="mt-1 block tabular-nums" :class="TEXT[state]">{{ primary?.version ?? "No data" }}</span>
+			<span
+				v-if="secondary"
+				class="mt-0.5 flex items-center justify-center gap-1 text-[11px] tabular-nums"
+				:title="`${secondary.version}: ${secondary.cell.reason}`"
+			>
+				<StateIcon :state="secondary.cell.state" :size="12" />
+				<span class="font-medium" :class="TEXT[secondary.cell.state]">{{ secondary.version }}</span>
+				<span class="text-neutral-500 @max-[7rem]:hidden dark:text-neutral-400">{{ SECONDARY_LABEL[secondary.cell.state] }}</span>
+			</span>
+			<span
+				v-if="summary.prerelease"
+				class="mt-0.5 flex items-center justify-center gap-1 text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400"
+				:title="`${summary.prerelease.version} beta: ${summary.prerelease.cell.reason}`"
+			>
+				<StateIcon :state="summary.prerelease.cell.state" :size="12" />
+				{{ summary.prerelease.version }}
+				<BetaChip />
+			</span>
+		</div>
 		<span
 			v-if="flagged"
 			class="absolute top-1.5 right-2 flex items-center gap-0.5 text-xs font-bold text-advisory"
@@ -86,6 +89,6 @@ const background = computed(() => {
 			<StateIcon state="advisory" :size="16" />
 			<span v-if="summary.advisories.length > 1">{{ summary.advisories.length }}</span>
 		</span>
-		<span class="mt-0.5 block text-xs leading-none tracking-widest text-neutral-400" aria-hidden="true">···</span>
+		<span class="absolute inset-x-0 bottom-2 block text-xs leading-none tracking-widest text-neutral-400" aria-hidden="true">···</span>
 	</td>
 </template>

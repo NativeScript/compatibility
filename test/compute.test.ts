@@ -282,4 +282,28 @@ describe("failure attribution", () => {
 		expect(cellFor(doc, "@nativescript/android", "9.0.5", "buildTools", "37.0.0").state).toBe("unverified");
 		expect(cellFor(doc, "@nativescript/android", "9.0.5", "jdk", "25").state).toBe("unsupported");
 	});
+
+	it("does not blame an unproven toolchain when a sole suspect explains the failure", () => {
+		const doc = buildDocument({
+			generatedAt: "2026-09-09T00:00:00.000Z",
+			toolchains: { xcode: [], cocoapods: [], compileSdk: [{ version: "37" }, { version: "36" }], buildTools: [{ version: "37.0.0" }, { version: "36.1.0" }], jdk: [{ version: "25" }, { version: "21" }], node: [] },
+			packages: [
+				{
+					spec: { name: "@nativescript/android", toolchains: ["compileSdk", "buildTools", "jdk"], keep: 5 },
+					document: { distTags: {}, manifests: [{ version: "9.1.1", requirements: { jdk: ">=17" } }] },
+				},
+			],
+			overrides: { requirements: [], advisories: [] },
+			verified: [
+				{ package: "@nativescript/android", version: "9.1.1", toolchains: { compileSdk: "37", buildTools: "37.0.0", jdk: "21" }, with: { nativescript: "9.1.1", node: "24" }, recordedAt: "2026-09-09T00:00:00Z" },
+				{ package: "@nativescript/android", version: "9.1.1", toolchains: { compileSdk: "37", buildTools: "37.0.0", jdk: "25" }, with: { nativescript: "9.1.1", node: "24" }, outcome: "failure", attempts: 2, recordedAt: "2026-09-09T00:00:00Z" },
+				// build-tools 36.1.0 has no success of its own, but the failure is already explained by JDK 25.
+				{ package: "@nativescript/android", version: "9.1.1", toolchains: { compileSdk: "36", buildTools: "36.1.0", jdk: "25" }, with: { nativescript: "9.1.1", node: "24" }, outcome: "failure", attempts: 2, recordedAt: "2026-09-09T00:00:00Z" },
+			],
+		});
+		const v911 = doc.packages["@nativescript/android"].versions["9.1.1"];
+		expect(v911.failed).toEqual({ jdk: ["25"] });
+		expect(cellFor(doc, "@nativescript/android", "9.1.1", "buildTools", "36.1.0").state).toBe("unverified");
+		expect(cellFor(doc, "@nativescript/android", "9.1.1", "compileSdk", "36").state).toBe("unverified");
+	});
 });

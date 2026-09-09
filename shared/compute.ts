@@ -201,8 +201,10 @@ export function verifiedPairs(
 
 /**
  * A failed build pins several toolchains at once and cannot say which one is
- * to blame, so a failure only implicates a toolchain version that no
- * successful build of the same release used.
+ * to blame. A failure therefore implicates only toolchain versions that no
+ * successful build of the same release used, and once one of its pinned
+ * versions is the sole suspect of another failure, that version explains the
+ * failure and the rest stay unjudged.
  */
 function verifiedFor(
 	packageName: string,
@@ -210,22 +212,48 @@ function verifiedFor(
 	verified: VerificationResult[],
 	outcome: ResultClass,
 ): VersionCompatibility["verified"] {
-	const forThisVersion = (pairs: ReturnType<typeof verifiedPairs>) =>
-		pairs.filter((pair) => pair.package === packageName && pair.version === version);
-	const successes = forThisVersion(verifiedPairs(verified, "success"));
-	const provenToWork = (pair: (typeof successes)[number]) =>
-		successes.some((ok) => ok.toolchain === pair.toolchain && sameLine(ok.toolchainVersion, pair.toolchainVersion));
+	const forThisVersion = (entries: VerificationResult[]) =>
+		entries.filter((entry) => entry.package === packageName && entry.version === version);
+	const successes = forThisVersion(verified).filter((entry) => classify(entry) === "success");
+	const provenToWork = (toolchain: ToolchainKey, toolchainVersion: string) =>
+		successes.some((ok) => {
+			const okVersion = ok.toolchains[toolchain as Exclude<ToolchainKey, "node">];
+			return okVersion !== undefined && sameLine(okVersion, toolchainVersion);
+		});
 
 	const result: VersionCompatibility["verified"] = {};
-	for (const pair of forThisVersion(verifiedPairs(verified, outcome))) {
-		if (outcome !== "success" && provenToWork(pair)) {
-			continue;
+	const add = (toolchain: ToolchainKey, toolchainVersion: string) => {
+		const list = (result[toolchain] ??= []);
+		if (!list.includes(toolchainVersion)) {
+			list.push(toolchainVersion);
 		}
-		const list = (result[pair.toolchain] ??= []);
-		if (!list.includes(pair.toolchainVersion)) {
-			list.push(pair.toolchainVersion);
+	};
+
+	if (outcome === "success") {
+		for (const pair of verifiedPairs(verified, "success")) {
+			if (pair.package === packageName && pair.version === version) {
+				add(pair.toolchain, pair.toolchainVersion);
+			}
+		}
+	} else {
+		const suspects = forThisVersion(verified)
+			.filter((entry) => classify(entry) === outcome)
+			.map((entry) =>
+				(Object.entries(entry.toolchains) as Array<[ToolchainKey, string]>).filter(
+					([toolchain, toolchainVersion]) => !provenToWork(toolchain, toolchainVersion),
+				),
+			);
+		const culprits = suspects.filter((pins) => pins.length === 1).map(([pin]) => pin);
+		for (const pins of suspects) {
+			const explained = culprits.find(([toolchain, toolchainVersion]) =>
+				pins.some(([key, value]) => key === toolchain && sameLine(value, toolchainVersion)),
+			);
+			for (const [toolchain, toolchainVersion] of explained ? [explained] : pins) {
+				add(toolchain, toolchainVersion);
+			}
 		}
 	}
+
 	for (const list of Object.values(result)) {
 		list.sort((a, b) => semver.rcompare(semver.coerce(a) ?? "0.0.0", semver.coerce(b) ?? "0.0.0"));
 	}

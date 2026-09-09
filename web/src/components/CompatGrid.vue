@@ -86,7 +86,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 	<!-- Below the desktop breakpoint the grid scrolls sideways inside this wrapper; above it, the
 	     table fits the page, the wrapper does not clip, and the header can stay pinned. -->
 	<div class="overflow-x-auto border-y border-neutral-200 lg:overflow-visible dark:border-neutral-700/80">
-		<table class="w-full min-w-[60rem] table-fixed border-separate border-spacing-0 text-sm">
+		<table class="w-full min-w-[66rem] table-fixed border-separate border-spacing-0 text-sm">
 			<colgroup>
 				<col class="w-88" />
 				<col v-for="key in ALL_KEYS" :key="key" />
