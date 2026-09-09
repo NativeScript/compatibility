@@ -189,10 +189,11 @@ describe("failed builds", () => {
 	});
 
 	it("a success outranks a sibling failure and only successes prove the CLI's Node.js support", () => {
-		expect(cellFor(doc(), "@nativescript/android", "9.1.1", "jdk", "17")).toMatchObject({ state: "verified", reason: "verified by CI (one other attempt failed)" });
+		expect(cellFor(doc(), "@nativescript/android", "9.1.1", "jdk", "17")).toMatchObject({ state: "verified", reason: "verified by CI" });
 		expect(doc().packages["nativescript"].versions["9.1.1"].verified).toEqual({ node: ["24"] });
 		expect(doc().packages["@nativescript/android"].versions["9.1.1"].failed).toEqual({ jdk: ["25"] });
-		expect(doc().packages["@nativescript/android"].versions["9.1.1"].suspect).toEqual({ jdk: ["21", "17"] });
+		// The JDK 17 failure is not attributed to JDK 17: another build of the release succeeded with it.
+		expect(doc().packages["@nativescript/android"].versions["9.1.1"].suspect).toEqual({ jdk: ["21"] });
 	});
 });
 

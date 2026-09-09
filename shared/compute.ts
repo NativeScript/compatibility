@@ -289,8 +289,7 @@ export function cellFor(
 
 	// Any success outranks failures: a combination that built once builds.
 	if (entry.verified[key]?.some((verified) => sameLine(verified, toolchainVersion))) {
-		const alsoFailed = entry.suspect?.[key]?.some((failed) => sameLine(failed, toolchainVersion));
-		return { state: "verified", reason: alsoFailed ? "verified by CI (one other attempt failed)" : "verified by CI" };
+		return { state: "verified", reason: "verified by CI" };
 	}
 	if (entry.failed?.[key]?.some((failed) => sameLine(failed, toolchainVersion))) {
 		return { state: "unsupported", reason: "build failed in two independent CI runs" };
