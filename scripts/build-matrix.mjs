@@ -103,11 +103,36 @@ async function runnerXcodes() {
 	}
 }
 
-// Newer platforms publish as "android-37.2"; the compile SDK the CLI takes is the API level.
-async function androidLevels() {
+// The SDK repository is the only source of installable package ids: newer API
+// levels publish as "android-37.2" with no plain "android-37", and build-tools
+// carry their own patch versions. The compile SDK the CLI takes is the level.
+async function androidLevels(count = ANDROID_LEVELS) {
 	const xml = await text(ANDROID_REPOSITORY);
-	const levels = new Set([...xml.matchAll(/path="platforms;android-(\d+)(?:\.\d+)?"/g)].map((m) => Number(m[1])));
-	return [...levels].sort((a, b) => b - a).slice(0, ANDROID_LEVELS).map(String);
+	const platforms = [...xml.matchAll(/path="platforms;(android-(\d+)(?:\.(\d+))?)"/g)].map((m) => ({
+		id: m[1],
+		level: Number(m[2]),
+		minor: Number(m[3] ?? 0),
+	}));
+	const buildTools = [...xml.matchAll(/path="build-tools;(\d+)\.(\d+)\.(\d+)"/g)]
+		.map((m) => ({ id: `${m[1]}.${m[2]}.${m[3]}`, major: Number(m[1]), rank: [Number(m[1]), Number(m[2]), Number(m[3])] }))
+		.sort((a, b) => b.rank[0] - a.rank[0] || b.rank[1] - a.rank[1] || b.rank[2] - a.rank[2]);
+
+	const byLevel = new Map();
+	for (const platform of platforms) {
+		const current = byLevel.get(platform.level);
+		if (!current || platform.minor > current.minor) {
+			byLevel.set(platform.level, platform);
+		}
+	}
+
+	return [...byLevel.values()]
+		.sort((a, b) => b.level - a.level)
+		.slice(0, count)
+		.map((platform) => ({
+			compileSdk: String(platform.level),
+			platform: platform.id,
+			buildTools: (buildTools.find((tools) => tools.major === platform.level) ?? buildTools[0]).id,
+		}));
 }
 
 async function jdkReleases() {
@@ -142,7 +167,7 @@ function emit(matrix) {
 	}
 }
 
-function manualMatrix(env) {
+async function manualMatrix(env) {
 	const platform = env.MANUAL_PLATFORM;
 	if (!platform || platform === "feed-driven") {
 		return null;
@@ -164,11 +189,16 @@ function manualMatrix(env) {
 			matrix.ios.push(job);
 		}
 	} else if (platform === "android") {
-		const job = { ...base, compileSdk: required("MANUAL_COMPILE_SDK"), jdk: required("MANUAL_JDK") };
+		const compileSdk = required("MANUAL_COMPILE_SDK");
+		const level = (await androidLevels(Infinity)).find((item) => item.compileSdk === compileSdk);
+		if (!level) {
+			throw new Error(`no installable platform for API level ${compileSdk} in the SDK repository`);
+		}
+		const job = { ...base, ...level, jdk: required("MANUAL_JDK") };
 		const result = {
 			package: "@nativescript/android",
 			version: job.runtime,
-			toolchains: { compileSdk: job.compileSdk, buildTools: `${job.compileSdk}.0.0`, jdk: job.jdk },
+			toolchains: { compileSdk: job.compileSdk, buildTools: job.buildTools, jdk: job.jdk },
 			with: { nativescript: job.cli, node: job.node },
 		};
 		if (force || !isRecorded(result)) {
@@ -183,7 +213,7 @@ function manualMatrix(env) {
 	return matrix;
 }
 
-const manual = manualMatrix(process.env);
+const manual = await manualMatrix(process.env);
 if (manual) {
 	emit(manual);
 	process.exit(0);
@@ -221,16 +251,16 @@ const android = [];
 for (const cli of clis) {
 	for (const node of nodes) {
 		for (const runtime of androidRuntimes) {
-			for (const compileSdk of levels) {
+			for (const level of levels) {
 				for (const jdk of jdks) {
 					const result = {
 						package: "@nativescript/android",
 						version: runtime,
-						toolchains: { compileSdk, buildTools: `${compileSdk}.0.0`, jdk },
+						toolchains: { compileSdk: level.compileSdk, buildTools: level.buildTools, jdk },
 						with: { nativescript: cli, node },
 					};
 					if (!isRecorded(result)) {
-						android.push({ cli, node, runtime, compileSdk, jdk });
+						android.push({ cli, node, runtime, ...level, jdk });
 					}
 				}
 			}

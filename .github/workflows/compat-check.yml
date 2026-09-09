@@ -62,6 +62,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # Results still waiting in an unmerged results PR count as recorded, so a
+      # re-run while that PR is open does not rebuild them.
+      - name: Include pending results
+        run: |
+          if git fetch origin ci/verified-results 2>/dev/null; then
+            git checkout origin/ci/verified-results -- data/verified
+            echo "included pending results from ci/verified-results"
+          fi
       - id: matrix
         env:
           MANUAL_PLATFORM: ${{ inputs.platform }}
@@ -136,10 +144,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - name: Install SDK platform ${{ matrix.compileSdk }}
+      - name: Install ${{ matrix.platform }} and build-tools ${{ matrix.buildTools }}
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
-            "platforms;android-${{ matrix.compileSdk }}" "build-tools;${{ matrix.compileSdk }}.0.0" >/dev/null
+            "platforms;${{ matrix.platform }}" "build-tools;${{ matrix.buildTools }}" >/dev/null
       - name: Build the compat app
         env:
           NS_SKIP_ENV_CHECK: "1"
@@ -152,7 +160,7 @@ jobs:
       - name: Record result
         run: |
           node scripts/report-verification.mjs --package @nativescript/android --version ${{ matrix.runtime }} \
-            --toolchain compileSdk=${{ matrix.compileSdk }} --toolchain buildTools=${{ matrix.compileSdk }}.0.0 --toolchain jdk=${{ matrix.jdk }} \
+            --toolchain compileSdk=${{ matrix.compileSdk }} --toolchain buildTools=${{ matrix.buildTools }} --toolchain jdk=${{ matrix.jdk }} \
             --with nativescript=${{ matrix.cli }} --with node=${{ matrix.node }} \
             --resolved node="$(node --version | tr -d v)" --resolved jdk="$(java -version 2>&1 | head -1 | cut -d'"' -f2)" \
             --evidence "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
