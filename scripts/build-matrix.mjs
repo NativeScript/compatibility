@@ -20,9 +20,9 @@ const XCODE_FEED = "https://xcodereleases.com/data.json";
 const NODE_FEED = "https://nodejs.org/dist/index.json";
 const ANDROID_REPOSITORY = "https://dl.google.com/android/repository/repository2-3.xml";
 const ADOPTIUM_RELEASES = "https://api.adoptium.net/v3/info/available_releases";
-// Newest image first: an Xcode line shipped by several images runs on the newest one.
-const MACOS_RUNNERS = ["macos-26", "macos-15", "macos-14"];
-const RUNNER_README = (image) => `https://raw.githubusercontent.com/actions/runner-images/main/images/macos/${image}-Readme.md`;
+// The runner-images README lists every hosted image with its labels and readme,
+// so new macOS images and Xcode preview images are discovered, not configured.
+const RUNNER_IMAGES_README = "https://raw.githubusercontent.com/actions/runner-images/main/README.md";
 
 const CLI_VERSIONS = 2; // newest stable CLI releases
 const RUNTIME_VERSIONS = 2; // newest stable releases of each runtime
@@ -93,21 +93,59 @@ async function xcodeLines() {
 	return [...lines].sort(compareVersions).slice(0, XCODE_LINES);
 }
 
-// Which GitHub macOS runner image ships each Xcode line, from the images' published readmes.
+// macOS images from the runner-images README table: name, arch, labels, readme.
+async function macosRunnerImages() {
+	const readme = await text(RUNNER_IMAGES_README);
+	const links = new Map(
+		[...readme.matchAll(/^\[([^\]]+)\]:\s*(\S+)/gm)].map(([, ref, url]) => [ref.toLowerCase(), url]),
+	);
+	const images = [];
+	for (const row of readme.split("\n")) {
+		const cols = row.split("|").map((c) => c.trim());
+		if (cols.length < 5) {
+			continue;
+		}
+		const [, name, arch, labelCell, refCell] = cols;
+		const ref = refCell.match(/^\[([^\]]+)\]$/)?.[1];
+		if (!ref || !/macos|xcode/i.test(name)) {
+			continue;
+		}
+		const url = links.get(ref.toLowerCase());
+		const labels = [...labelCell.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+		if (!url || !labels.length) {
+			continue;
+		}
+		images.push({
+			name: name.replace(/<br>.*$/s, "").trim(),
+			arch,
+			// The plain label: not the "-large" size variants, and not "macos-latest", which moves.
+			label: labels.find((label) => !/large|latest/.test(label)) ?? labels[0],
+			readme: url.replace("github.com/", "raw.githubusercontent.com/").replace("/blob/", "/"),
+			os: Number(name.match(/macOS (\d+)/)?.[1] ?? 0),
+			preview: /xcode/i.test(name),
+		});
+	}
+	// arm64 first, regular images before Xcode preview images, newest OS first.
+	return images.sort(
+		(a, b) => Number(b.arch === "arm64") - Number(a.arch === "arm64") || Number(a.preview) - Number(b.preview) || b.os - a.os,
+	);
+}
+
+// Which runner label ships each Xcode line, from every image's readme.
 async function runnerXcodes() {
 	const byLine = new Map();
-	for (const image of MACOS_RUNNERS) {
+	for (const image of await macosRunnerImages()) {
 		try {
-			const readme = await text(RUNNER_README(image));
+			const readme = await text(image.readme);
 			const section = readme.split(/^#+ .*Xcode.*$/m)[1] ?? readme;
 			for (const [, version] of section.matchAll(/^\|\s*(\d+\.\d+(?:\.\d+)?)/gm)) {
 				const line = version.split(".").slice(0, 2).join(".");
 				if (!byLine.has(line)) {
-					byLine.set(line, image);
+					byLine.set(line, image.label);
 				}
 			}
 		} catch (err) {
-			console.warn(`${image} readme unavailable (${err.message})`);
+			console.warn(`${image.name} readme unavailable (${err.message})`);
 		}
 	}
 	return byLine;

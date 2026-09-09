@@ -29,8 +29,9 @@ as a browser-support-style matrix (Vue + Vite) for people.
 
 1. **Matrix**: `scripts/build-matrix.mjs` pulls the newest CLI and runtime
    releases from npm, Node.js majors from nodejs.org, Xcode lines from
-   xcodereleases.com (each mapped to the newest GitHub macOS runner image
-   that ships it, including beta lines a runner already has), Android API levels from the SDK repository and JDK LTS releases
+   xcodereleases.com (each sent to the GitHub-hosted runner image that ships
+   it, discovered from the runner-images README, including Xcode preview
+   images), Android API levels from the SDK repository and JDK LTS releases
    from Adoptium, forms every pinned combination, and drops the ones that
    already have a file under `data/verified/`. The first run is large (GitHub
    allows 256 jobs per matrix; the rest wait for the next run); afterwards a
