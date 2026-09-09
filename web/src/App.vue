@@ -78,7 +78,7 @@ function label(key: string): string {
 
 	<main>
 		<p v-if="error" class="px-6 text-bad">Could not load compatibility data: {{ error }}</p>
-		<p v-else-if="!document" class="px-6 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">Loading…</p>
+		<p v-else-if="!document" class="px-6 text-neutral-500 dark:text-neutral-400">Loading…</p>
 		<template v-else>
 			<CompatGrid v-model:open="open" v-model:expanded="expanded" :document="document" :query="query" :show-prereleases="showPrereleases" />
 
@@ -92,7 +92,7 @@ function label(key: string): string {
 								<strong :class="advisory.severity === 'error' ? 'text-bad' : 'text-advisory'">
 									<code>{{ advisory.package }}</code> {{ advisory.affects }}
 								</strong>
-								<span class="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400"> when </span>
+								<span class="text-neutral-500 dark:text-neutral-400"> when </span>
 								<span v-for="(range, key, index) in advisory.when" :key="key">
 									<template v-if="index > 0">, </template>{{ label(key) }} <code>{{ range }}</code>
 								</span>

@@ -112,7 +112,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 						class="border-b border-neutral-200 bg-sky-50/70 px-6 py-2 text-left font-semibold dark:border-neutral-700/80 dark:bg-sky-900/25"
 					>
 						<code>{{ group.name }}</code>
-						<span class="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">{{ group.total }} releases</span>
+						<span class="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-400">{{ group.total }} releases</span>
 					</th>
 				</tr>
 				<template v-for="version in group.visible" :key="version">
@@ -174,6 +174,6 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 				</tr>
 			</tbody>
 		</table>
-		<p v-if="!groups.length" class="px-6 py-4 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">No releases match.</p>
+		<p v-if="!groups.length" class="px-6 py-4 text-neutral-500 dark:text-neutral-400">No releases match.</p>
 	</div>
 </template>
