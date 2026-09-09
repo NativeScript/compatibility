@@ -4,6 +4,7 @@ import { computed, watch } from "vue";
 import { summarizeCell } from "../../../shared/compute";
 import { TOOLCHAIN_LABELS, type CompatibilityDocument, type ToolchainKey } from "../../../shared/types";
 import CellDetails from "./CellDetails.vue";
+import Chip from "./Chip.vue";
 import CompatCell from "./CompatCell.vue";
 import type { OpenCell } from "../urlState";
 
@@ -138,13 +139,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 								:title="`${group.name}@${version} on npm`"
 							><code>{{ version }}</code></a>
 							<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-								<span
-									v-for="tag in group.tags.get(version) ?? []"
-									:key="tag"
-									class="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-700 dark:bg-sky-900/60 dark:text-sky-300"
-								>
-									{{ tag }}
-								</span>
+								<Chip v-for="tag in group.tags.get(version) ?? []" :key="tag">{{ tag }}</Chip>
 							</div>
 						</th>
 						<template v-for="key in ALL_KEYS" :key="key">
