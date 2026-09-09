@@ -98,6 +98,16 @@
 								},
 								"publishedAt": {
 									"type": "string"
+								},
+								"failed": {
+									"type": "object",
+									"description": "Toolchain versions a CI build failed with, per key.",
+									"additionalProperties": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									}
 								}
 							}
 						}

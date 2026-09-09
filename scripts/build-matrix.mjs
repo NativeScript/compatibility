@@ -198,7 +198,7 @@ async function manualMatrix(env) {
 		const result = {
 			package: "@nativescript/android",
 			version: job.runtime,
-			toolchains: { compileSdk: job.compileSdk, buildTools: job.buildTools, jdk: job.jdk },
+			toolchains: { compileSdk: job.compileSdk, jdk: job.jdk },
 			with: { nativescript: job.cli, node: job.node },
 		};
 		if (force || !isRecorded(result)) {
@@ -253,10 +253,11 @@ for (const cli of clis) {
 		for (const runtime of androidRuntimes) {
 			for (const level of levels) {
 				for (const jdk of jdks) {
+					// build-tools is chosen for the level, not a controlled dimension, so it is not part of the identity.
 					const result = {
 						package: "@nativescript/android",
 						version: runtime,
-						toolchains: { compileSdk: level.compileSdk, buildTools: level.buildTools, jdk },
+						toolchains: { compileSdk: level.compileSdk, jdk },
 						with: { nativescript: cli, node },
 					};
 					if (!isRecorded(result)) {

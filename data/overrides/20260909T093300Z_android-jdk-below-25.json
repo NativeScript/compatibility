@@ -1,0 +1,10 @@
+{
+	"$schema": "https://compatibility.nativescript.org/v1/schemas/overrides.json",
+	"kind": "requirements",
+	"package": "@nativescript/android",
+	"versions": ">=9.0.0",
+	"set": {
+		"jdk": ">=17 <25"
+	},
+	"note": "Gradle 8.14.3, pinned by the 9.x runtimes, cannot run on JDK 25 ('Unsupported class file major version 69'). Every JDK 25 build failed in https://github.com/NativeScript/compatibility/actions/runs/34334388684."
+}

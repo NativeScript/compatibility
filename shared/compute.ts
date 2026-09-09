@@ -63,10 +63,12 @@ export function buildDocument(input: {
 				manifest.requirements,
 				input.overrides,
 			);
+			const failed = verifiedFor(spec.name, manifest.version, input.verified, "failure");
 			versions[manifest.version] = {
 				requirements: requirements.ranges,
 				source: requirements.source,
-				verified: verifiedFor(spec.name, manifest.version, input.verified),
+				verified: verifiedFor(spec.name, manifest.version, input.verified, "success"),
+				...(Object.keys(failed).length ? { failed } : {}),
 				publishedAt: manifest.publishedAt,
 			};
 		}
@@ -120,30 +122,39 @@ export function effectiveRequirements(
  */
 export function verifiedPairs(
 	verified: VerificationResult[],
+	outcome: "success" | "failure" = "success",
 ): Array<{ package: string; version: string; toolchain: ToolchainKey; toolchainVersion: string }> {
-	return verified.flatMap((entry) => [
-		...Object.entries(entry.toolchains).map(([toolchain, toolchainVersion]) => ({
-			package: entry.package,
-			version: entry.version,
-			toolchain: toolchain as ToolchainKey,
-			toolchainVersion: toolchainVersion!,
-		})),
-		{
-			package: "nativescript",
-			version: entry.with.nativescript,
-			toolchain: "node" as ToolchainKey,
-			toolchainVersion: entry.with.node,
-		},
-	]);
+	return verified
+		.filter((entry) => (entry.outcome ?? "success") === outcome)
+		.flatMap((entry) => [
+			...Object.entries(entry.toolchains).map(([toolchain, toolchainVersion]) => ({
+				package: entry.package,
+				version: entry.version,
+				toolchain: toolchain as ToolchainKey,
+				toolchainVersion: toolchainVersion!,
+			})),
+			// A failed runtime build says nothing about the CLI's Node.js support.
+			...(outcome === "success"
+				? [
+						{
+							package: "nativescript",
+							version: entry.with.nativescript,
+							toolchain: "node" as ToolchainKey,
+							toolchainVersion: entry.with.node,
+						},
+					]
+				: []),
+		]);
 }
 
 function verifiedFor(
 	packageName: string,
 	version: string,
 	verified: VerificationResult[],
+	outcome: "success" | "failure",
 ): VersionCompatibility["verified"] {
 	const result: VersionCompatibility["verified"] = {};
-	for (const pair of verifiedPairs(verified)) {
+	for (const pair of verifiedPairs(verified, outcome)) {
 		if (pair.package !== packageName || pair.version !== version) {
 			continue;
 		}
@@ -212,6 +223,9 @@ export function cellFor(
 
 	if (entry.verified[key]?.some((verified) => sameLine(verified, toolchainVersion))) {
 		return { state: "verified", reason: "verified by CI" };
+	}
+	if (entry.failed?.[key]?.some((failed) => sameLine(failed, toolchainVersion))) {
+		return { state: "unsupported", reason: "build failed in CI" };
 	}
 
 	const range = entry.requirements[key];

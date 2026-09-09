@@ -106,6 +106,7 @@ jobs:
           sudo xcode-select -s "$app/Contents/Developer"
           xcodebuild -version
       - name: Build the compat app
+        id: build
         env:
           NS_SKIP_ENV_CHECK: "1"
         run: |
@@ -115,13 +116,17 @@ jobs:
           npm install @nativescript/ios@${{ matrix.runtime }} --save-dev
           ns build ios --disableAnalytics
       - name: Record result
+        # A pinned combination that failed is as final as one that passed: record it so it is never rebuilt.
+        if: always() && steps.build.outcome != 'skipped'
         run: |
           node scripts/report-verification.mjs --package @nativescript/ios --version ${{ matrix.runtime }} \
             --toolchain xcode=${{ matrix.xcode }} --toolchain cocoapods="$(pod --version)" \
             --with nativescript=${{ matrix.cli }} --with node=${{ matrix.node }} \
             --resolved node="$(node --version | tr -d v)" --resolved xcode="$(xcodebuild -version | head -1 | cut -d' ' -f2)" \
+            --outcome ${{ steps.build.outcome }} \
             --evidence "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       - uses: actions/upload-artifact@v4
+        if: always() && steps.build.outcome != 'skipped'
         with:
           name: result-ios-${{ matrix.runtime }}-xcode-${{ matrix.xcode }}-cli-${{ matrix.cli }}-node-${{ matrix.node }}
           path: data/verified/
@@ -149,6 +154,7 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             "platforms;${{ matrix.platform }}" "build-tools;${{ matrix.buildTools }}" >/dev/null
       - name: Build the compat app
+        id: build
         env:
           NS_SKIP_ENV_CHECK: "1"
         run: |
@@ -158,13 +164,16 @@ jobs:
           npm install @nativescript/android@${{ matrix.runtime }} --save-dev
           ns build android --compileSdk ${{ matrix.compileSdk }} --disableAnalytics
       - name: Record result
+        if: always() && steps.build.outcome != 'skipped'
         run: |
           node scripts/report-verification.mjs --package @nativescript/android --version ${{ matrix.runtime }} \
             --toolchain compileSdk=${{ matrix.compileSdk }} --toolchain buildTools=${{ matrix.buildTools }} --toolchain jdk=${{ matrix.jdk }} \
             --with nativescript=${{ matrix.cli }} --with node=${{ matrix.node }} \
             --resolved node="$(node --version | tr -d v)" --resolved jdk="$(java -version 2>&1 | head -1 | cut -d'"' -f2)" \
+            --outcome ${{ steps.build.outcome }} \
             --evidence "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       - uses: actions/upload-artifact@v4
+        if: always() && steps.build.outcome != 'skipped'
         with:
           name: result-android-${{ matrix.runtime }}-sdk-${{ matrix.compileSdk }}-jdk-${{ matrix.jdk }}-cli-${{ matrix.cli }}-node-${{ matrix.node }}
           path: data/verified/
@@ -179,7 +188,11 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      # Base the results branch on the current default branch, not the commit
+      # this run started from, so the PR can only ever add result files.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -204,8 +217,8 @@ jobs:
         if: steps.merge.outputs.changed == 'true'
         with:
           branch: ci/verified-results
-          title: "data: new verified compatibility results"
-          commit-message: "data: record verified compatibility results"
+          title: "data: new compatibility results"
+          commit-message: "data: record compatibility results"
           body: |
             Successful builds from the compat-check run
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}.

@@ -4,7 +4,7 @@
 //
 //   node scripts/report-verification.mjs --package @nativescript/ios --version 9.1.0 \
 //     --toolchain xcode=26.3 --toolchain cocoapods=1.16.2 \
-//     --with nativescript=9.1.1 --with node=22 --resolved node=22.23.2 --evidence <url>
+//     --with nativescript=9.1.1 --with node=22 --resolved node=22.23.2 --evidence <url> [--outcome failure]
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { findRecorded, readResults, resultPath } from "./lib/results.mjs";
@@ -34,6 +34,7 @@ const result = {
 	toolchains: options.toolchains,
 	with: options.with,
 	...(Object.keys(options.resolved).length ? { resolved: options.resolved } : {}),
+	...(options.outcome === "failure" ? { outcome: "failure" } : {}),
 	...(options.evidence ? { evidence: options.evidence } : {}),
 	recordedAt: new Date().toISOString(),
 };

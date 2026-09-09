@@ -38,8 +38,10 @@ as a browser-support-style matrix (Vue + Vite) for people.
    creates. A combination verified once is never rebuilt.
 2. **Build jobs**: one job per combination installs the pinned CLI and
    Node.js, creates a fresh app, builds it with the pinned runtime and
-   toolchain, and on success writes its result file under `data/verified/`.
-   One build proves the runtime's toolchain cells and the CLI's Node.js cell.
+   toolchain, and writes its result file under `data/verified/` whether it
+   passed or failed. A success proves the runtime's toolchain cells and the
+   CLI's Node.js cell; a failure marks the toolchain cells unsupported. Either
+   way the combination is never rebuilt.
 3. **Collect**: the artifacts are dropped onto the checkout and proposed as a
    pull request that only adds files. Merging it redeploys the site with those
    cells marked as verified by CI.
@@ -56,6 +58,7 @@ For a release and a toolchain version, in this order:
 1. **Unsupported / Advisory**: a maintainer advisory matches the release and
    the toolchain version.
 2. **Verified**: a recorded CI build succeeded with that toolchain version.
+   A recorded CI failure marks the cell unsupported instead.
 3. **Declared**: inside the range the package published under
    `nativescript.requirements`, or inside a maintainer override for releases
    that predate the block.
