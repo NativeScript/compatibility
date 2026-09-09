@@ -20,7 +20,9 @@ const XCODE_FEED = "https://xcodereleases.com/data.json";
 const NODE_FEED = "https://nodejs.org/dist/index.json";
 const ANDROID_REPOSITORY = "https://dl.google.com/android/repository/repository2-3.xml";
 const ADOPTIUM_RELEASES = "https://api.adoptium.net/v3/info/available_releases";
-const MACOS_RUNNER_README = "https://raw.githubusercontent.com/actions/runner-images/main/images/macos/macos-15-Readme.md";
+// Newest image first: an Xcode line shipped by several images runs on the newest one.
+const MACOS_RUNNERS = ["macos-26", "macos-15", "macos-14"];
+const RUNNER_README = (image) => `https://raw.githubusercontent.com/actions/runner-images/main/images/macos/${image}-Readme.md`;
 
 const CLI_VERSIONS = 2; // newest stable CLI releases
 const RUNTIME_VERSIONS = 2; // newest stable releases of each runtime
@@ -91,16 +93,24 @@ async function xcodeLines() {
 	return [...lines].sort(compareVersions).slice(0, XCODE_LINES);
 }
 
-// Xcode versions installed on the GitHub macOS runner image, from its published readme.
+// Which GitHub macOS runner image ships each Xcode line, from the images' published readmes.
 async function runnerXcodes() {
-	try {
-		const readme = await text(MACOS_RUNNER_README);
-		const section = readme.split(/^#+ .*Xcode.*$/m)[1] ?? readme;
-		return [...section.matchAll(/^\|\s*(\d+\.\d+(?:\.\d+)?)/gm)].map((m) => m[1]);
-	} catch (err) {
-		console.warn(`runner image readme unavailable (${err.message}); every Xcode line will be attempted`);
-		return null;
+	const byLine = new Map();
+	for (const image of MACOS_RUNNERS) {
+		try {
+			const readme = await text(RUNNER_README(image));
+			const section = readme.split(/^#+ .*Xcode.*$/m)[1] ?? readme;
+			for (const [, version] of section.matchAll(/^\|\s*(\d+\.\d+(?:\.\d+)?)/gm)) {
+				const line = version.split(".").slice(0, 2).join(".");
+				if (!byLine.has(line)) {
+					byLine.set(line, image);
+				}
+			}
+		} catch (err) {
+			console.warn(`${image} readme unavailable (${err.message})`);
+		}
 	}
+	return byLine;
 }
 
 // The SDK repository is the only source of installable package ids: newer API
@@ -183,7 +193,12 @@ async function manualMatrix(env) {
 	const matrix = { ios: [], android: [], deferred: { ios: 0, android: 0 }, manual: true };
 
 	if (platform === "ios") {
-		const job = { ...base, xcode: required("MANUAL_XCODE") };
+		const xcode = required("MANUAL_XCODE");
+		const runners = await runnerXcodes();
+		if (!runners.has(xcode)) {
+			throw new Error(`no GitHub macOS runner image ships Xcode ${xcode} (known: ${[...runners.keys()].join(", ")})`);
+		}
+		const job = { ...base, xcode, runner: runners.get(xcode) };
 		const result = { package: "@nativescript/ios", version: job.runtime, toolchains: { xcode: job.xcode }, with: { nativescript: job.cli, node: job.node } };
 		if (force || !isRecorded(result)) {
 			matrix.ios.push(job);
@@ -230,17 +245,20 @@ const [clis, nodes, iosRuntimes, androidRuntimes, xcodes, installedXcodes, level
 	jdkReleases(),
 ]);
 
+// Lines a runner ships that are newer than the newest stable feed line are
+// betas; they join the matrix so a new Xcode is exercised before it ships.
+const newestStable = xcodes[0];
+const betaLines = [...installedXcodes.keys()].filter((line) => compareVersions(line, newestStable) < 0);
+const xcodeLinesToTest = [...new Set([...betaLines, ...xcodes])].filter((line) => installedXcodes.has(line));
+
 const ios = [];
 for (const cli of clis) {
 	for (const node of nodes) {
 		for (const runtime of iosRuntimes) {
-			for (const xcode of xcodes) {
-				if (installedXcodes && !installedXcodes.some((v) => sameLine(v, xcode))) {
-					continue;
-				}
+			for (const xcode of xcodeLinesToTest) {
 				const result = { package: "@nativescript/ios", version: runtime, toolchains: { xcode }, with: { nativescript: cli, node } };
 				if (!isRecorded(result)) {
-					ios.push({ cli, node, runtime, xcode });
+					ios.push({ cli, node, runtime, xcode, runner: installedXcodes.get(xcode) });
 				}
 			}
 		}
@@ -273,7 +291,7 @@ const matrix = {
 	ios: ios.slice(0, MAX_JOBS_PER_MATRIX),
 	android: android.slice(0, MAX_JOBS_PER_MATRIX),
 	deferred: { ios: Math.max(0, ios.length - MAX_JOBS_PER_MATRIX), android: Math.max(0, android.length - MAX_JOBS_PER_MATRIX) },
-	feeds: { clis, nodes, iosRuntimes, androidRuntimes, xcodes, installedXcodes, levels, jdks },
+	feeds: { clis, nodes, iosRuntimes, androidRuntimes, xcodes, runners: Object.fromEntries(installedXcodes), levels, jdks },
 };
 
 emit(matrix);

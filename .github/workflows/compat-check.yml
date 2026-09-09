@@ -86,7 +86,8 @@ jobs:
     name: iOS ${{ matrix.runtime }} · Xcode ${{ matrix.xcode }} · CLI ${{ matrix.cli }} · Node ${{ matrix.node }}
     needs: matrix
     if: needs.matrix.outputs.has_ios == 'true'
-    runs-on: macos-15
+    # Chosen per Xcode line by the matrix job from the runner images' readmes.
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -100,7 +101,7 @@ jobs:
         run: |
           app=$(ls -d /Applications/Xcode_${{ matrix.xcode }}*.app 2>/dev/null | sort -V | tail -1)
           if [ -z "$app" ]; then
-            echo "::warning::Xcode ${{ matrix.xcode }} is not installed on this runner image"
+            echo "::warning::Xcode ${{ matrix.xcode }} is not installed on ${{ matrix.runner }}"
             exit 1
           fi
           sudo xcode-select -s "$app/Contents/Developer"
@@ -179,49 +180,39 @@ jobs:
           path: data/verified/
 
   collect:
-    name: Merge results
+    name: Record results
     needs: [matrix, ios, android]
-    # Runs even when some builds failed: every success is a verified cell.
+    # Runs even when some builds failed: every outcome is a recorded cell.
     if: always() && needs.matrix.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     steps:
-      # Base the results branch on the current default branch, not the commit
-      # this run started from, so the PR can only ever add result files.
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      # Each artifact is a data/verified/ tree holding only that job's new
-      # files, so dropping them all onto the checkout is the whole merge.
+      # Each artifact is a data/verified/ tree holding that job's result file,
+      # so dropping them all onto the checkout is the whole merge.
       - uses: actions/download-artifact@v4
         with:
           pattern: result-*
           path: data/verified
           merge-multiple: true
-      - id: merge
+      - name: Commit results
         run: |
-          git add -N data/verified
-          if git diff --quiet data/verified; then
+          git add data/verified
+          if git diff --cached --quiet; then
             echo "no new results"
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            git diff --stat data/verified
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-      - uses: peter-evans/create-pull-request@v7
-        if: steps.merge.outputs.changed == 'true'
-        with:
-          branch: ci/verified-results
-          title: "data: new compatibility results"
-          commit-message: "data: record compatibility results"
-          body: |
-            Successful builds from the compat-check run
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}.
-            Merging redeploys the site with these cells marked as verified by CI.
-          add-paths: data/verified
-          delete-branch: true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          count=$(git diff --cached --name-only | wc -l | tr -d ' ')
+          git commit -m "data: record $count compatibility results" \
+            -m "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          # Another run or a maintainer may have pushed meanwhile; results only add files, so a rebase never conflicts.
+          for attempt in 1 2 3; do
+            git push && exit 0
+            git pull --rebase
+          done
+          exit 1

@@ -29,8 +29,8 @@ as a browser-support-style matrix (Vue + Vite) for people.
 
 1. **Matrix**: `scripts/build-matrix.mjs` pulls the newest CLI and runtime
    releases from npm, Node.js majors from nodejs.org, Xcode lines from
-   xcodereleases.com (intersected with what the GitHub macOS runner image
-   ships), Android API levels from the SDK repository and JDK LTS releases
+   xcodereleases.com (each mapped to the newest GitHub macOS runner image
+   that ships it, including beta lines a runner already has), Android API levels from the SDK repository and JDK LTS releases
    from Adoptium, forms every pinned combination, and drops the ones that
    already have a file under `data/verified/`. The first run is large (GitHub
    allows 256 jobs per matrix; the rest wait for the next run); afterwards a
@@ -42,9 +42,9 @@ as a browser-support-style matrix (Vue + Vite) for people.
    passed or failed. A success proves the runtime's toolchain cells and the
    CLI's Node.js cell; a failure marks the toolchain cells unsupported. Either
    way the combination is never rebuilt.
-3. **Collect**: the artifacts are dropped onto the checkout and proposed as a
-   pull request that only adds files. Merging it redeploys the site with those
-   cells marked as verified by CI.
+3. **Collect**: the artifacts are dropped onto the checkout and committed to
+   the default branch. Every file names the run that produced it, so the
+   commit is the audit trail; nothing needs a manual merge.
 
 Running the workflow by hand with its inputs filled in verifies one specific
 combination instead of the feed-driven set; `force` rebuilds a combination
