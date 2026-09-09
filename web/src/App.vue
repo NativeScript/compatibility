@@ -38,7 +38,7 @@ function label(key: string): string {
 </script>
 
 <template>
-	<header class="px-6 pt-6 pb-5">
+	<header class="max-w-full px-6 pt-6 pb-5">
 		<div class="flex items-start justify-between gap-4">
 			<h1 class="text-2xl font-semibold tracking-tight">NativeScript compatibility</h1>
 			<ThemeToggle />
@@ -63,7 +63,7 @@ function label(key: string): string {
 					type="search"
 					placeholder="Filter by package, version or tag…"
 					aria-label="Filter releases"
-					class="w-80 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:border-declared focus:ring-2 focus:ring-declared/30 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
+					class="w-full rounded-lg border sm:w-80 border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:border-declared focus:ring-2 focus:ring-declared/30 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
 				/>
 				<label class="flex cursor-pointer items-center gap-2 text-sm">
 					<input v-model="showPrereleases" type="checkbox" class="size-4 accent-declared" />

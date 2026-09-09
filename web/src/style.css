@@ -26,7 +26,7 @@
 		--color-bad: #f26b66;
 	}
 	body {
-		@apply bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+		@apply overflow-x-hidden bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
 	}
 }
 
