@@ -58,18 +58,14 @@ jobs:
       has_ios: ${{ steps.matrix.outputs.has_ios }}
       has_android: ${{ steps.matrix.outputs.has_android }}
     steps:
+      # The default branch as it is when this job starts, so results committed
+      # by a run that finished while this one was queued are already recorded.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # Results still waiting in an unmerged results PR count as recorded, so a
-      # re-run while that PR is open does not rebuild them.
-      - name: Include pending results
-        run: |
-          if git fetch origin ci/verified-results 2>/dev/null; then
-            git checkout origin/ci/verified-results -- data/verified
-            echo "included pending results from ci/verified-results"
-          fi
       - id: matrix
         env:
           MANUAL_PLATFORM: ${{ inputs.platform }}
