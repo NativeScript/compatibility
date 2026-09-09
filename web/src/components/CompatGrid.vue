@@ -83,7 +83,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 </script>
 
 <template>
-	<div class="border-y border-neutral-200 dark:border-neutral-700/80">
+	<div class="border-b border-neutral-200 dark:border-neutral-700/80">
 		<table class="w-full min-w-(--grid-min-width) table-fixed border-separate border-spacing-0 text-sm">
 			<colgroup>
 				<col class="w-32 md:w-40 lg:w-88" />

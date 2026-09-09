@@ -70,7 +70,8 @@ function shortDate(version: string): string {
 </script>
 
 <template>
-	<div>
+	<!-- isolate: the timeline raises its icons above the track, and that must not reach the grid's sticky headers. -->
+	<div class="isolate">
 		<p class="text-sm">
 			<strong>{{ label }}</strong>
 			<template v-if="summary.rawRange">

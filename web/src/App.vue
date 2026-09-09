@@ -38,7 +38,7 @@ function label(key: string): string {
 </script>
 
 <template>
-	<header class="shrink-0 px-4 pt-4 pb-4 md:px-6 md:pt-6 md:pb-5">
+	<header class="shrink-0 border-b border-neutral-200 px-4 pt-4 pb-4 md:px-6 md:pt-6 md:pb-5 dark:border-neutral-700/80">
 		<div class="flex items-start justify-between gap-4">
 			<h1 class="text-2xl font-semibold tracking-tight">NativeScript compatibility</h1>
 			<ThemeToggle />
