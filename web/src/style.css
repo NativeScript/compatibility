@@ -15,6 +15,8 @@
 	html {
 		font-feature-settings: "cv11", "ss01";
 		color-scheme: light;
+		/* Below this the document scrolls sideways and the page chrome pins itself to the left. */
+		--grid-min-width: 66rem;
 	}
 	html.dark {
 		color-scheme: dark;
@@ -26,7 +28,7 @@
 		--color-bad: #f26b66;
 	}
 	body {
-		@apply overflow-x-hidden bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+		@apply bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
 	}
 }
 

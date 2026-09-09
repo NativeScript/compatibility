@@ -38,7 +38,8 @@ function label(key: string): string {
 </script>
 
 <template>
-	<header class="max-w-full px-6 pt-6 pb-5">
+	<!-- Sticky to the left so the page chrome stays put while a wide grid scrolls sideways. -->
+	<header class="sticky left-0 max-w-screen px-6 pt-6 pb-5">
 		<div class="flex items-start justify-between gap-4">
 			<h1 class="text-2xl font-semibold tracking-tight">NativeScript compatibility</h1>
 			<ThemeToggle />
@@ -87,12 +88,12 @@ function label(key: string): string {
 	</header>
 
 	<main>
-		<p v-if="error" class="px-6 text-bad">Could not load compatibility data: {{ error }}</p>
-		<p v-else-if="!document" class="px-6 text-neutral-500 dark:text-neutral-400">Loading…</p>
+		<p v-if="error" class="sticky left-0 max-w-screen px-6 text-bad">Could not load compatibility data: {{ error }}</p>
+		<p v-else-if="!document" class="sticky left-0 max-w-screen px-6 text-neutral-500 dark:text-neutral-400">Loading…</p>
 		<template v-else>
 			<CompatGrid v-model:open="open" v-model:expanded="expanded" :document="document" :query="query" :show-prereleases="showPrereleases" />
 
-			<section v-if="document.advisories.length" class="px-6 pt-10">
+			<section v-if="document.advisories.length" class="sticky left-0 max-w-screen px-6 pt-10">
 				<h2 class="text-base font-semibold">Advisories</h2>
 				<ul class="mt-3 space-y-4 text-sm">
 					<li v-for="advisory in document.advisories" :key="advisory.id" class="flex gap-2.5">

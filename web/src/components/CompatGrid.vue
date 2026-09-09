@@ -83,17 +83,17 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 </script>
 
 <template>
-	<!-- Below the desktop breakpoint the grid scrolls sideways inside this wrapper; above it, the
-	     table fits the page, the wrapper does not clip, and the header can stay pinned. -->
-	<div class="overflow-x-auto border-y border-neutral-200 lg:overflow-visible dark:border-neutral-700/80">
-		<table class="w-full min-w-[66rem] table-fixed border-separate border-spacing-0 text-sm">
+	<!-- The table overflows the document rather than a wrapper: a scrolling wrapper would
+	     become the sticky containing block and the column headers would scroll away. -->
+	<div class="border-y border-neutral-200 dark:border-neutral-700/80">
+		<table class="w-full min-w-(--grid-min-width) table-fixed border-separate border-spacing-0 text-sm">
 			<colgroup>
-				<col class="w-88" />
+				<col class="w-40 lg:w-88" />
 				<col v-for="key in ALL_KEYS" :key="key" />
 			</colgroup>
 			<thead>
 				<tr>
-					<th rowspan="2" :class="headCell" class="top-0 px-6 py-3 text-left align-bottom">Release</th>
+					<th rowspan="2" :class="headCell" class="top-0 left-0 z-20 px-6 py-3 text-left align-bottom">Release</th>
 					<th
 						v-for="group in COLUMNS"
 						:key="group.platform"
@@ -112,8 +112,9 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 				<tr>
 					<th
 						:colspan="ALL_KEYS.length + 1"
-						class="border-b border-neutral-200 bg-sky-50/70 px-6 py-2 text-left font-semibold dark:border-neutral-700/80 dark:bg-sky-900/25"
+						class="border-b border-neutral-200 bg-sky-50/70 py-2 text-left font-semibold dark:border-neutral-700/80 dark:bg-sky-900/25"
 					>
+						<div class="sticky left-0 inline-block px-6">
 						<a
 							:href="`https://www.npmjs.com/package/${group.name}`"
 							target="_blank"
@@ -122,6 +123,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 							:title="`${group.name} on npm`"
 						><code>{{ group.name }}</code></a>
 						<span class="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-400">{{ group.total }} releases</span>
+						</div>
 					</th>
 				</tr>
 				<template v-for="version in group.visible" :key="version">
@@ -129,7 +131,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 						<th
 							scope="row"
 							:class="border"
-							class="px-6 py-3 text-left align-top font-medium group-hover:bg-neutral-50 dark:group-hover:bg-neutral-800/70"
+							class="sticky left-0 z-[1] bg-white px-6 py-3 text-left align-top font-medium group-hover:bg-neutral-50 dark:bg-neutral-950 dark:group-hover:bg-neutral-800"
 						>
 							<a
 								:href="`https://www.npmjs.com/package/${group.name}/v/${version}`"
@@ -164,7 +166,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 					</tr>
 				</template>
 				<tr v-if="group.total > INITIAL_ROWS && !normalizedQuery">
-					<th scope="row" :class="border" class="px-6 py-2 text-left">
+					<th scope="row" :class="border" class="sticky left-0 z-[1] bg-white px-6 py-2 text-left dark:bg-neutral-950">
 						<button
 							type="button"
 							class="rounded-lg border border-neutral-300 bg-neutral-100 px-3 py-1.5 text-sm font-medium hover:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
@@ -177,6 +179,6 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 				</tr>
 			</tbody>
 		</table>
-		<p v-if="!groups.length" class="px-6 py-4 text-neutral-500 dark:text-neutral-400">No releases match.</p>
+		<p v-if="!groups.length" class="sticky left-0 max-w-screen px-6 py-4 text-neutral-500 dark:text-neutral-400">No releases match.</p>
 	</div>
 </template>
