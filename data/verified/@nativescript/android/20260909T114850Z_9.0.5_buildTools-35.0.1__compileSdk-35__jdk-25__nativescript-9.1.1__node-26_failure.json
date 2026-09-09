@@ -1,0 +1,23 @@
+{
+	"$schema": "https://compatibility.nativescript.org/v1/schemas/verified.json",
+	"package": "@nativescript/android",
+	"version": "9.0.5",
+	"toolchains": {
+		"compileSdk": "35",
+		"buildTools": "35.0.1",
+		"jdk": "25"
+	},
+	"with": {
+		"nativescript": "9.1.1",
+		"node": "26"
+	},
+	"resolved": {
+		"node": "26.8.1",
+		"jdk": "25.0.4.1"
+	},
+	"outcome": "failure",
+	"attempts": 1,
+	"signature": "Error: Command ./gradlew failed with exit code 1",
+	"evidence": "https://github.com/NativeScript/compatibility/actions/runs/34347383414",
+	"recordedAt": "2026-09-09T11:48:50.211Z"
+}
