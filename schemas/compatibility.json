@@ -38,6 +38,10 @@
 						"prerelease": {
 							"type": "boolean"
 						},
+						"lts": {
+							"type": "boolean",
+							"description": "A long-term-support line, where the toolchain has the notion."
+						},
 						"date": {
 							"type": "string"
 						}

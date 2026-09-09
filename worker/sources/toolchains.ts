@@ -72,13 +72,19 @@ async function fetchNode(): Promise<ToolchainVersion[]> {
 	const releases = (await (await fetch(NODE_FEED)).json()) as Array<{
 		version: string;
 		date: string;
+		/** The LTS codename once the line enters LTS, false before. */
+		lts: string | false;
 	}>;
 	// Latest release per major line, newest majors first.
 	const byMajor = new Map<number, ToolchainVersion>();
 	for (const release of releases) {
 		const major = semver.major(release.version);
 		if (!byMajor.has(major)) {
-			byMajor.set(major, { version: release.version.replace(/^v/, ""), date: release.date });
+			byMajor.set(major, {
+				version: release.version.replace(/^v/, ""),
+				lts: release.lts ? true : undefined,
+				date: release.date,
+			});
 		}
 	}
 	return Array.from(byMajor.entries())

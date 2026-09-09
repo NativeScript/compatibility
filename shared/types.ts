@@ -23,6 +23,8 @@ export const TOOLCHAIN_LABELS: Record<ToolchainKey, string> = {
 export interface ToolchainVersion {
 	version: string;
 	prerelease?: boolean;
+	/** A long-term-support line, where the toolchain has the notion (Node.js, JDK). */
+	lts?: boolean;
 	/** ISO date the version shipped, when the feed provides one. */
 	date?: string;
 }

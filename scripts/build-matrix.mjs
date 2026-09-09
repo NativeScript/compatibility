@@ -25,7 +25,7 @@ const ADOPTIUM_RELEASES = "https://api.adoptium.net/v3/info/available_releases";
 const RUNNER_IMAGES_README = "https://raw.githubusercontent.com/actions/runner-images/main/README.md";
 
 const CLI_VERSIONS = 2; // newest stable CLI releases
-const RUNTIME_VERSIONS = 2; // newest stable releases of each runtime
+const RUNTIME_VERSIONS = 4; // newest stable releases of each runtime
 const NODE_MAJORS = 2; // newest even (LTS-track) Node.js majors
 const XCODE_LINES = 4; // newest major.minor lines
 const ANDROID_LEVELS = 3; // newest API levels

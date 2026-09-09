@@ -368,7 +368,7 @@ export interface CellSummary {
 	verified: string[];
 	advisories: Advisory[];
 	/** State of every known toolchain version, newest first, for the detail view. */
-	breakdown: Array<{ version: string; prerelease?: boolean; cell: Cell }>;
+	breakdown: Array<{ version: string; prerelease?: boolean; lts?: boolean; cell: Cell }>;
 	/** The newest stable toolchain version and how this package version fares with it. */
 	latest?: { version: string; cell: Cell };
 	/** A prerelease toolchain newer than `latest`, when one is known. */
@@ -400,6 +400,7 @@ export function summarizeCell(
 	const breakdown = document.toolchains[key].map((tool) => ({
 		version: tool.version,
 		prerelease: tool.prerelease,
+		lts: tool.lts,
 		cell: cellFor(document, packageName, version, key, tool.version),
 	}));
 	const latest = breakdown.find((item) => !item.prerelease);

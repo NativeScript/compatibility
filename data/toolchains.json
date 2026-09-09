@@ -19,13 +19,17 @@
 		{ "version": "30.0.3" }
 	],
 	"jdk": [
-		{ "version": "25" },
-		{ "version": "21" },
-		{ "version": "17" },
-		{ "version": "11" },
-		{ "version": "8" }
+		{ "version": "25", "lts": true },
+		{ "version": "21", "lts": true },
+		{ "version": "17", "lts": true },
+		{ "version": "11", "lts": true },
+		{ "version": "8", "lts": true }
 	],
 	"xcode": [{ "version": "26.3" }, { "version": "26.2" }, { "version": "16.4" }],
-	"node": [{ "version": "24.0.0" }, { "version": "22.0.0" }, { "version": "20.0.0" }],
+	"node": [
+		{ "version": "24.0.0", "lts": true },
+		{ "version": "22.0.0", "lts": true },
+		{ "version": "20.0.0", "lts": true }
+	],
 	"cocoapods": [{ "version": "1.16.2" }, { "version": "1.15.2" }]
 }
