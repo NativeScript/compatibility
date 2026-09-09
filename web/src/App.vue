@@ -38,13 +38,12 @@ function label(key: string): string {
 </script>
 
 <template>
-	<!-- Sticky to the left so the page chrome stays put while a wide grid scrolls sideways. -->
-	<header class="sticky left-0 max-w-screen px-6 pt-6 pb-5">
+	<header class="shrink-0 px-4 pt-4 pb-4 md:px-6 md:pt-6 md:pb-5">
 		<div class="flex items-start justify-between gap-4">
 			<h1 class="text-2xl font-semibold tracking-tight">NativeScript compatibility</h1>
 			<ThemeToggle />
 		</div>
-		<p class="mt-1 max-w-3xl text-neutral-600 dark:text-neutral-400">
+		<p class="mt-1 hidden max-w-3xl text-neutral-600 md:block dark:text-neutral-400">
 			Which toolchains each runtime and CLI release supports, from published package metadata, CI
 			verification runs and maintainer advisories. Click a cell for the version-by-version picture.
 		</p>
@@ -67,7 +66,7 @@ function label(key: string): string {
 				</template>
 			</span>
 		</nav>
-		<div class="mt-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+		<div class="mt-4 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 md:mt-5">
 			<div class="flex flex-wrap items-center gap-5">
 				<input
 					v-model="query"
@@ -87,13 +86,15 @@ function label(key: string): string {
 		</div>
 	</header>
 
-	<main>
-		<p v-if="error" class="sticky left-0 max-w-screen px-6 text-bad">Could not load compatibility data: {{ error }}</p>
-		<p v-else-if="!document" class="sticky left-0 max-w-screen px-6 text-neutral-500 dark:text-neutral-400">Loading…</p>
-		<template v-else>
+	<!-- The pane below the header is the only thing that scrolls, in both directions, so the
+	     grid's sticky headers and anything pinned to its left edge resolve against it. -->
+	<main class="@container min-h-0 flex-1 overflow-auto">
+		<p v-if="error" class="px-6 text-bad">Could not load compatibility data: {{ error }}</p>
+		<p v-else-if="!document" class="px-6 text-neutral-500 dark:text-neutral-400">Loading…</p>
+		<div v-else class="min-w-(--grid-min-width)">
 			<CompatGrid v-model:open="open" v-model:expanded="expanded" :document="document" :query="query" :show-prereleases="showPrereleases" />
 
-			<section v-if="document.advisories.length" class="sticky left-0 max-w-screen px-6 pt-10">
+			<section v-if="document.advisories.length" class="sticky left-0 max-w-[100cqw] px-6 pt-10">
 				<h2 class="text-base font-semibold">Advisories</h2>
 				<ul class="mt-3 space-y-4 text-sm">
 					<li v-for="advisory in document.advisories" :key="advisory.id" class="flex gap-2.5">
@@ -117,6 +118,6 @@ function label(key: string): string {
 					</li>
 				</ul>
 			</section>
-		</template>
+		</div>
 	</main>
 </template>
