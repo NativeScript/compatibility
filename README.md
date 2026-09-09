@@ -1,8 +1,19 @@
-# compatibility.nativescript.org (prototype)
+# compatibility.nativescript.org
 
-A Cloudflare Worker that computes which toolchains work with which NativeScript
-runtime and CLI releases, serves the result as JSON for tools, and renders it
-as a browser-support-style matrix (Vue + Vite) for people.
+**Live:** https://compatibility.nativescript.org · **JSON:** [`/v1/compatibility.json`](https://compatibility.nativescript.org/v1/compatibility.json) · **Schemas:** [`/v1/schemas/`](https://compatibility.nativescript.org/v1/schemas/package.json)
+
+[![compat-check](https://github.com/NativeScript/compatibility/actions/workflows/compat-check.yml/badge.svg)](https://github.com/NativeScript/compatibility/actions/workflows/compat-check.yml)
+[![deploy](https://github.com/NativeScript/compatibility/actions/workflows/deploy.yml/badge.svg)](https://github.com/NativeScript/compatibility/actions/workflows/deploy.yml)
+
+Which toolchains work with which [NativeScript](https://nativescript.org) runtime
+and CLI releases. A Cloudflare Worker computes the answer from published package
+metadata, CI builds and maintainer advisories, serves it as JSON for tools such
+as [`ns doctor`](https://github.com/NativeScript/nativescript-cli), and renders
+it as a browser-support-style matrix for people.
+
+Found a wrong cell? [Open an issue](https://github.com/NativeScript/compatibility/issues/new).
+Toolchain requirements for a runtime belong in its `package.json` (see below);
+everything else lives in [`data/`](data).
 
 ## Layout
 
