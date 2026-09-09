@@ -8,12 +8,20 @@ export interface OpenCell {
 	key: ToolchainKey;
 }
 
+/** A cell of the toolchain-first view: one toolchain version crossed with one package. */
+export interface OpenToolchainCell {
+	key: ToolchainKey;
+	version: string;
+	pkg: string;
+}
+
 /**
  * Page state lives in the query string so a view can be shared or reloaded:
  *   ?q=9.1&pre=1&cell=@nativescript/ios@9.1.0/xcode&all=@nativescript/ios,nativescript
+ *   ?view=toolchain&tc=xcode@26.4/@nativescript/ios&all=xcode
  */
 export function useUrlState() {
-	const params = useUrlSearchParams<{ q?: string; pre?: string; cell?: string; all?: string }>("history", {
+	const params = useUrlSearchParams<{ q?: string; pre?: string; cell?: string; all?: string; view?: string; tc?: string }>("history", {
 		removeNullishValues: true,
 		removeFalsyValues: true,
 		write: true,
@@ -43,6 +51,23 @@ export function useUrlState() {
 		},
 	});
 
+	const byToolchain = computed({
+		get: () => params.view === "toolchain",
+		set: (value) => {
+			params.view = value ? "toolchain" : undefined;
+		},
+	});
+
+	const openToolchain = computed<OpenToolchainCell | null>({
+		get: () => {
+			const match = params.tc?.match(/^([a-zA-Z]+)@([^/]+)\/(.+)$/);
+			return match ? { key: match[1] as ToolchainKey, version: match[2], pkg: match[3] } : null;
+		},
+		set: (value) => {
+			params.tc = value ? `${value.key}@${value.version}/${value.pkg}` : undefined;
+		},
+	});
+
 	const expanded = computed<string[]>({
 		get: () => (params.all ? params.all.split(",").filter(Boolean) : []),
 		set: (value) => {
@@ -50,5 +75,5 @@ export function useUrlState() {
 		},
 	});
 
-	return { query, showPrereleases, open, expanded };
+	return { query, showPrereleases, open, expanded, byToolchain, openToolchain };
 }

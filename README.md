@@ -105,6 +105,12 @@ line with its verdict, and a newer beta gets its own line. Clicking a cell
 expands the per-version timeline with the declared range, every older
 version, and LTS and beta markers.
 
+The "By toolchain" view flips the axes: rows are toolchain versions and a cell
+names the run of consecutive releases that support one, `9.0.3+` while the
+newest release still does or `8.2.0 – 8.5.3` once a newer release dropped it,
+with the release CI first verified on a second line when proof starts later
+than the declaration. Clicking a cell shows the same timeline over releases.
+
 ## Endpoints
 
 - `/` the app.

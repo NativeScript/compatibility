@@ -480,3 +480,86 @@ export function prettyRange(range: string): string {
 function shortVersion(version: string): string {
 	return version.replace(/(\.0)+$/, "");
 }
+
+export interface ToolchainSummary {
+	state: CellState;
+	/** "9.0.3+" while the newest stable release supports it, "8.2.0 – 8.5.3" once support ended, empty when nothing does. */
+	text: string;
+	since?: { version: string; cell: Cell };
+	/** The last release that supported it, once a newer one stopped. */
+	until?: { version: string; cell: Cell };
+	/** The oldest release of the supported run that CI verified. */
+	verifiedSince?: string;
+	/** Every tracked release of the package, newest first. */
+	releases: Array<{ version: string; prerelease?: boolean; tags: string[]; date?: string; cell: Cell }>;
+}
+
+const SUPPORTED_STATES: CellState[] = ["verified", "declared", "advisory"];
+
+/**
+ * The toolchain-first question: which releases of a package take this
+ * toolchain version? The answer is the run of consecutive stable releases
+ * nearest the present that support it, so an old release that happened to
+ * work does not claim support for everything after it.
+ */
+export function summarizeToolchain(
+	document: CompatibilityDocument,
+	key: ToolchainKey,
+	toolchainVersion: string,
+	packageName: string,
+): ToolchainSummary {
+	const pkg = document.packages[packageName];
+	if (!pkg) {
+		return { state: "unverified", text: "", releases: [] };
+	}
+	const tags = new Map<string, string[]>();
+	for (const [tag, version] of Object.entries(pkg.distTags)) {
+		tags.set(version, [...(tags.get(version) ?? []), tag]);
+	}
+	const releases = Object.keys(pkg.versions)
+		.sort(semver.rcompare)
+		.map((version) => ({
+			version,
+			prerelease: semver.prerelease(version) ? true : undefined,
+			tags: tags.get(version) ?? [],
+			date: pkg.versions[version].publishedAt,
+			cell: cellFor(document, packageName, version, key, toolchainVersion),
+		}));
+
+	const stable = releases.filter((release) => !release.prerelease).reverse();
+	const newest = stable[stable.length - 1];
+	let run: typeof stable = [];
+	let current: typeof stable = [];
+	for (const release of stable) {
+		if (SUPPORTED_STATES.includes(release.cell.state)) {
+			current.push(release);
+			run = current;
+		} else {
+			current = [];
+		}
+	}
+	if (!run.length) {
+		return { state: newest?.cell.state ?? "unverified", text: "", releases };
+	}
+
+	const since = run[0];
+	const until = run[run.length - 1];
+	const ongoing = until === newest;
+	const verifiedSince = run.find((release) => release.cell.state === "verified")?.version;
+	const state: CellState = !ongoing
+		? newest.cell.state
+		: newest.cell.state === "advisory"
+			? "advisory"
+			: verifiedSince
+				? "verified"
+				: "declared";
+
+	return {
+		state,
+		text: ongoing ? `${since.version}+` : `${since.version} – ${until.version}`,
+		since: { version: since.version, cell: since.cell },
+		...(ongoing ? {} : { until: { version: until.version, cell: until.cell } }),
+		...(verifiedSince ? { verifiedSince } : {}),
+		releases,
+	};
+}

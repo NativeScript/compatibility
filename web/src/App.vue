@@ -6,13 +6,15 @@ import CompatGrid from "./components/CompatGrid.vue";
 import LegendItem from "./components/LegendItem.vue";
 import StateIcon from "./components/StateIcon.vue";
 import ThemeToggle from "./components/ThemeToggle.vue";
+import ToolchainGrid from "./components/ToolchainGrid.vue";
+import ViewToggle from "./components/ViewToggle.vue";
 import { useUrlState } from "./urlState";
 
 const STATES: CellState[] = ["verified", "declared", "unverified", "advisory", "unsupported"];
 
 const document = ref<CompatibilityDocument | null>(null);
 const error = ref<string | null>(null);
-const { query, showPrereleases, open, expanded } = useUrlState();
+const { query, showPrereleases, open, expanded, byToolchain, openToolchain } = useUrlState();
 
 onMounted(async () => {
 	try {
@@ -68,10 +70,11 @@ function label(key: string): string {
 		</nav>
 		<div class="mt-4 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 md:mt-5">
 			<div class="flex flex-wrap items-center gap-5">
+				<ViewToggle v-model="byToolchain" />
 				<input
 					v-model="query"
 					type="search"
-					placeholder="Filter by package, version or tag…"
+					placeholder="Filter by package, version, tag or toolchain…"
 					aria-label="Filter releases"
 					class="w-full rounded-lg border sm:w-80 border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:border-declared focus:ring-2 focus:ring-declared/30 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
 				/>
@@ -92,7 +95,15 @@ function label(key: string): string {
 		<p v-if="error" class="px-6 text-bad">Could not load compatibility data: {{ error }}</p>
 		<p v-else-if="!document" class="px-6 text-neutral-500 dark:text-neutral-400">Loading…</p>
 		<div v-else class="min-w-(--grid-min-width)">
-			<CompatGrid v-model:open="open" v-model:expanded="expanded" :document="document" :query="query" :show-prereleases="showPrereleases" />
+			<ToolchainGrid
+				v-if="byToolchain"
+				v-model:open="openToolchain"
+				v-model:expanded="expanded"
+				:document="document"
+				:query="query"
+				:show-prereleases="showPrereleases"
+			/>
+			<CompatGrid v-else v-model:open="open" v-model:expanded="expanded" :document="document" :query="query" :show-prereleases="showPrereleases" />
 
 			<section v-if="document.advisories.length" class="sticky left-0 max-w-[100cqw] px-6 pt-10">
 				<h2 class="text-base font-semibold">Advisories</h2>

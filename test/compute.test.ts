@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDocument, cellFor, effectiveRequirements, matchingAdvisories } from "../shared/compute";
+import { buildDocument, cellFor, effectiveRequirements, matchingAdvisories, summarizeToolchain } from "../shared/compute";
 import type { CompatibilityDocument, Overrides, VerificationResult } from "../shared/types";
 
 const overrides: Overrides = {
@@ -306,5 +306,50 @@ describe("failure attribution", () => {
 		expect(v911.failed).toEqual({ jdk: ["25"] });
 		expect(cellFor(doc, "@nativescript/android", "9.1.1", "buildTools", "36.1.0").state).toBe("unverified");
 		expect(cellFor(doc, "@nativescript/android", "9.1.1", "compileSdk", "36").state).toBe("unverified");
+	});
+});
+
+describe("summarizeToolchain", () => {
+	it("names the run of releases that support a toolchain version", () => {
+		const doc = document();
+		const verified = summarizeToolchain(doc, "xcode", "26.2", "@nativescript/ios");
+		expect(verified).toMatchObject({ state: "verified", text: "9.1.0+", verifiedSince: "9.1.0" });
+		expect(verified.releases.map((r) => r.version)).toEqual(["9.1.0", "8.9.0"]);
+		expect(verified.releases[0].tags).toEqual(["latest"]);
+
+		const declared = summarizeToolchain(doc, "xcode", "16.4", "@nativescript/ios");
+		expect(declared).toMatchObject({ state: "declared", text: "8.9.0+" });
+		expect(declared.verifiedSince).toBeUndefined();
+
+		expect(summarizeToolchain(doc, "xcode", "27.0", "@nativescript/ios")).toMatchObject({ state: "unsupported", text: "" });
+		expect(summarizeToolchain(doc, "xcode", "26.2", "@nativescript/android")).toMatchObject({ state: "unverified", text: "" });
+	});
+
+	it("reports a range once a newer release dropped the toolchain", () => {
+		const doc = buildDocument({
+			generatedAt: "2026-09-09T00:00:00.000Z",
+			toolchains: { xcode: [], cocoapods: [], compileSdk: [], buildTools: [], jdk: [{ version: "17" }, { version: "11" }], node: [] },
+			packages: [
+				{
+					spec: { name: "@nativescript/android", toolchains: ["jdk"], keep: 5 },
+					document: {
+						distTags: {},
+						manifests: [
+							{ version: "9.1.0", requirements: { jdk: ">=17" } },
+							{ version: "9.0.0", requirements: { jdk: ">=11" } },
+							{ version: "8.9.0", requirements: { jdk: ">=11" } },
+						],
+					},
+				},
+			],
+			overrides: { requirements: [], advisories: [] },
+			verified: [],
+		});
+		expect(summarizeToolchain(doc, "jdk", "11", "@nativescript/android")).toMatchObject({
+			state: "unsupported",
+			text: "8.9.0 – 9.0.0",
+			until: { version: "9.0.0" },
+		});
+		expect(summarizeToolchain(doc, "jdk", "17", "@nativescript/android")).toMatchObject({ state: "declared", text: "8.9.0+" });
 	});
 });
