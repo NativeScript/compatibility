@@ -1,0 +1,26 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://compatibility.nativescript.org/v1/schemas/verified.json",
+	"title": "CI verification results",
+	"type": "object",
+	"required": ["results"],
+	"properties": {
+		"$schema": { "type": "string" },
+		"results": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["package", "version", "toolchain", "toolchainVersion"],
+				"additionalProperties": false,
+				"properties": {
+					"package": { "type": "string" },
+					"version": { "type": "string" },
+					"toolchain": { "enum": ["xcode", "cocoapods", "compileSdk", "buildTools", "jdk", "node"] },
+					"toolchainVersion": { "type": "string" },
+					"evidence": { "type": "string", "description": "URL of the workflow run that proved it." },
+					"date": { "type": "string", "format": "date" }
+				}
+			}
+		}
+	}
+}

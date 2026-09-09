@@ -1,0 +1,32 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://compatibility.nativescript.org/v1/schemas/package.json",
+	"title": "package.json with NativeScript metadata",
+	"description": "The standard package.json schema plus the `nativescript` block used by runtimes and plugins. Reference it from a package.json with \"$schema\": \"https://compatibility.nativescript.org/v1/schemas/package.json\".",
+	"allOf": [
+		{ "$ref": "https://json.schemastore.org/package.json" },
+		{
+			"type": "object",
+			"properties": {
+				"nativescript": {
+					"type": "object",
+					"description": "NativeScript-specific package metadata.",
+					"properties": {
+						"requirements": { "$ref": "https://compatibility.nativescript.org/v1/schemas/requirements.json" },
+						"platforms": {
+							"type": "object",
+							"description": "Minimum runtime versions a plugin needs, per platform.",
+							"properties": {
+								"android": { "type": "string" },
+								"ios": { "type": "string" },
+								"visionos": { "type": "string" }
+							},
+							"additionalProperties": { "type": "string" }
+						}
+					},
+					"additionalProperties": true
+				}
+			}
+		}
+	]
+}

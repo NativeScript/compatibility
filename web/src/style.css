@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+	--font-sans: "Inter Variable", Inter, system-ui, sans-serif;
+	--color-ok: #1f9d55;
+	--color-declared: #2f7fc1;
+	--color-unverified: #8b8f96;
+	--color-advisory: #d28a00;
+	--color-bad: #d64545;
+}
+
+@layer base {
+	html {
+		font-feature-settings: "cv11", "ss01";
+		color-scheme: light;
+	}
+	html.dark {
+		color-scheme: dark;
+	}
+	body {
+		@apply bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+	}
+}
+
+@utility hatched {
+	background-image: repeating-linear-gradient(-45deg, transparent 0 6px, rgb(0 0 0 / 0.035) 6px 8px);
+	@variant dark {
+		background-image: repeating-linear-gradient(-45deg, transparent 0 6px, rgb(255 255 255 / 0.05) 6px 8px);
+	}
+}

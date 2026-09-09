@@ -1,0 +1,21 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "nativescript-compatibility",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-09-09",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": { "enabled": true, "head_sampling_rate": 1 },
+	"assets": {
+		// The Vue app built by Vite. Requests that match no asset (the /v1 API) reach the Worker.
+		"directory": "./dist/web",
+		"not_found_handling": "none"
+	},
+	"kv_namespaces": [
+		// `id` is a placeholder until the namespace exists; `wrangler dev` uses local storage.
+		{ "binding": "COMPAT_KV", "id": "00000000000000000000000000000000" }
+	],
+	"triggers": { "crons": ["0 * * * *"] },
+	"vars": {
+		"NPM_REGISTRY": "https://registry.npmjs.org/"
+	}
+}

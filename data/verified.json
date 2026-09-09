@@ -1,0 +1,29 @@
+{
+	"$schema": "../schemas/verified.json",
+	"results": [
+		{
+			"package": "@nativescript/ios",
+			"version": "9.1.0",
+			"toolchain": "xcode",
+			"toolchainVersion": "26.2",
+			"evidence": "https://github.com/NativeScript/compatibility/actions (sample entry)",
+			"date": "2026-09-01"
+		},
+		{
+			"package": "@nativescript/android",
+			"version": "9.1.1",
+			"toolchain": "jdk",
+			"toolchainVersion": "21",
+			"evidence": "https://github.com/NativeScript/compatibility/actions (sample entry)",
+			"date": "2026-09-01"
+		},
+		{
+			"package": "@nativescript/android",
+			"version": "9.1.1",
+			"toolchain": "compileSdk",
+			"toolchainVersion": "37",
+			"evidence": "https://github.com/NativeScript/compatibility/actions (sample entry)",
+			"date": "2026-09-01"
+		}
+	]
+}

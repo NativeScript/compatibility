@@ -1,0 +1,43 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://compatibility.nativescript.org/v1/schemas/overrides.json",
+	"title": "Compatibility overrides and advisories",
+	"description": "Maintainer-curated requirements for package versions that publish none, and advisories about breaks discovered after publication.",
+	"type": "object",
+	"required": ["requirements", "advisories"],
+	"properties": {
+		"$schema": { "type": "string" },
+		"requirements": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["package", "versions", "set"],
+				"additionalProperties": false,
+				"properties": {
+					"package": { "type": "string" },
+					"versions": { "type": "string", "description": "Semver range of package versions the override applies to." },
+					"set": { "$ref": "https://compatibility.nativescript.org/v1/schemas/requirements.json" },
+					"note": { "type": "string" }
+				}
+			}
+		},
+		"advisories": { "type": "array", "items": { "$ref": "#/definitions/advisory" } }
+	},
+	"definitions": {
+		"advisory": {
+			"type": "object",
+			"required": ["id", "package", "affects", "when", "severity", "message"],
+			"additionalProperties": false,
+			"properties": {
+				"id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+				"package": { "type": "string" },
+				"affects": { "type": "string", "description": "Semver range of affected package versions." },
+				"when": { "$ref": "https://compatibility.nativescript.org/v1/schemas/requirements.json", "description": "Toolchain conditions; every listed range must match." },
+				"severity": { "enum": ["error", "warn"] },
+				"message": { "type": "string" },
+				"fix": { "type": "string" },
+				"url": { "type": "string", "format": "uri" }
+			}
+		}
+	}
+}

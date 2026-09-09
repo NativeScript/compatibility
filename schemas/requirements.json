@@ -1,0 +1,23 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://compatibility.nativescript.org/v1/schemas/requirements.json",
+	"title": "NativeScript toolchain requirements",
+	"description": "Semver ranges of the toolchains a NativeScript runtime or package supports. Published under the `nativescript.requirements` key of package.json. Unknown keys are ignored by consumers so new constraints can ship ahead of tooling support.",
+	"type": "object",
+	"properties": {
+		"compileSdk": { "$ref": "#/definitions/range", "description": "Android SDK platform (API level) range, e.g. \">=35\"." },
+		"buildTools": { "$ref": "#/definitions/range", "description": "Android SDK build-tools range, e.g. \">=35.0.0\"." },
+		"jdk": { "$ref": "#/definitions/range", "description": "JDK range, e.g. \">=17 <22\"." },
+		"xcode": { "$ref": "#/definitions/range", "description": "Xcode range, e.g. \">=16 <27\"." },
+		"cocoapods": { "$ref": "#/definitions/range", "description": "CocoaPods range, e.g. \">=1.12\"." },
+		"node": { "$ref": "#/definitions/range", "description": "Node.js range; for packages that also declare engines.node, that field wins." }
+	},
+	"additionalProperties": { "$ref": "#/definitions/range" },
+	"definitions": {
+		"range": {
+			"type": "string",
+			"minLength": 1,
+			"description": "A semver range. Toolchain versions with fewer than three parts (\"37\", \"16.4\") are coerced before matching."
+		}
+	}
+}
