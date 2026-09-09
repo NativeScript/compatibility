@@ -111,7 +111,8 @@ jobs:
           ns create compat --tsc --disableAnalytics
           cd compat
           npm install @nativescript/ios@${{ matrix.runtime }} --save-dev
-          ns build ios --disableAnalytics
+          # One retry before a failure is recorded: a runner hiccup must not become a permanent verdict.
+          ns build ios --disableAnalytics || ns build ios --disableAnalytics
       - name: Record result
         # A pinned combination that failed is as final as one that passed: record it so it is never rebuilt.
         if: always() && steps.build.outcome != 'skipped'
@@ -159,7 +160,7 @@ jobs:
           ns create compat --tsc --disableAnalytics
           cd compat
           npm install @nativescript/android@${{ matrix.runtime }} --save-dev
-          ns build android --compileSdk ${{ matrix.compileSdk }} --disableAnalytics
+          ns build android --compileSdk ${{ matrix.compileSdk }} --disableAnalytics || ns build android --compileSdk ${{ matrix.compileSdk }} --disableAnalytics
       - name: Record result
         if: always() && steps.build.outcome != 'skipped'
         run: |

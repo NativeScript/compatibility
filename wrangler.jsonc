@@ -10,12 +10,9 @@
 		"not_found_handling": "none"
 	},
 	"kv_namespaces": [
-		// Create once with `npx wrangler kv namespace create COMPAT_KV` and paste the id
-		// it prints; `wrangler dev` ignores it and uses local storage.
-		{ "binding": "COMPAT_KV", "id": "00000000000000000000000000000000" }
+		{ "binding": "COMPAT_KV", "id": "ed0d40f462c842399a720b35a02ebce0" }
 	],
-	// Once the nativescript.org zone is on the deploying account:
-	// "routes": [{ "pattern": "compatibility.nativescript.org", "custom_domain": true }],
+	"routes": [{ "pattern": "compatibility.nativescript.org", "custom_domain": true }],
 	"triggers": { "crons": ["0 * * * *"] },
 	"vars": {
 		"NPM_REGISTRY": "https://registry.npmjs.org/"
