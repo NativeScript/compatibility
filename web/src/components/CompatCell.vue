@@ -52,7 +52,8 @@ const background = computed(() => {
 			:title="`${summary.prerelease.version} beta: ${summary.prerelease.cell.reason}`"
 		>
 			<StateIcon :state="summary.prerelease.cell.state" :size="12" />
-			{{ summary.prerelease.version }}β
+			{{ summary.prerelease.version }}
+			<span class="rounded-full bg-amber-100 px-1.5 py-px text-[9px] font-semibold tracking-wider text-amber-700 uppercase dark:bg-amber-900/40 dark:text-amber-300">beta</span>
 		</span>
 		<span
 			v-if="flagged"
