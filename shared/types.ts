@@ -75,6 +75,8 @@ export interface Advisory {
 export interface CompatibilityDocument {
 	$schema?: string;
 	schemaVersion: 1;
+	/** The deployment that computed this document. */
+	build?: string;
 	generatedAt: string;
 	toolchains: Record<ToolchainKey, ToolchainVersion[]>;
 	packages: Record<string, PackageCompatibility>;

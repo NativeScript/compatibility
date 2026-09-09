@@ -46,6 +46,7 @@ export function collectOverrides(entries: OverrideEntry[]): Overrides {
 
 export function buildDocument(input: {
 	schema?: string;
+	build?: string;
 	generatedAt: string;
 	toolchains: Record<ToolchainKey, ToolchainVersion[]>;
 	packages: Array<{ spec: TrackedPackageSpec; document: PackageDocument }>;
@@ -86,6 +87,7 @@ export function buildDocument(input: {
 	return {
 		...(input.schema ? { $schema: input.schema } : {}),
 		schemaVersion: 1,
+		...(input.build ? { build: input.build } : {}),
 		generatedAt: input.generatedAt,
 		toolchains: input.toolchains,
 		packages,

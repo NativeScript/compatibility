@@ -29,7 +29,8 @@ const SCHEMAS: Record<string, unknown> = {
 	"verified.json": verifiedSchema,
 };
 
-const KV_KEY = "document:v1";
+// Keyed by build so a deployment never serves a document computed by an older build.
+const KV_KEY = `document:v1:${__BUILD_ID__}`;
 /** Served copies older than this are refreshed in the background. */
 const STALE_AFTER_MS = 60 * 60 * 1000;
 const KV_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -120,6 +121,7 @@ async function refresh(env: Env): Promise<CompatibilityDocument> {
 
 	const document = buildDocument({
 		schema: "https://compatibility.nativescript.org/v1/schemas/compatibility.json",
+		build: __BUILD_ID__,
 		generatedAt: new Date().toISOString(),
 		toolchains,
 		packages,

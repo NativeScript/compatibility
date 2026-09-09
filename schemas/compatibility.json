@@ -140,6 +140,10 @@
 			"items": {
 				"$ref": "#/definitions/advisory"
 			}
+		},
+		"build": {
+			"type": "string",
+			"description": "The deployment (commit) that computed this document."
 		}
 	},
 	"definitions": {
