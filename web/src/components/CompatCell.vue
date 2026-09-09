@@ -17,12 +17,12 @@ const rangeColor = computed(() =>
 );
 const background = computed(() => {
 	if (props.open) {
-		return "bg-sky-50 dark:bg-sky-950/40";
+		return "bg-sky-50 dark:bg-sky-900/35";
 	}
 	if (flagged.value) {
-		return "bg-amber-50/70 hover:bg-amber-100/70 dark:bg-amber-950/25 dark:hover:bg-amber-950/45";
+		return "bg-amber-50/70 hover:bg-amber-100/70 dark:bg-amber-900/20 dark:hover:bg-amber-900/35";
 	}
-	return "hover:bg-neutral-50 dark:hover:bg-neutral-900";
+	return "hover:bg-neutral-50 dark:hover:bg-neutral-800/70";
 });
 </script>
 
@@ -51,7 +51,7 @@ const background = computed(() => {
 		<span
 			v-if="open"
 			aria-hidden="true"
-			class="absolute -bottom-[7px] left-1/2 z-10 size-3.5 -translate-x-1/2 rotate-45 border-t border-l border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
+			class="absolute -bottom-[7px] left-1/2 z-10 size-3.5 -translate-x-1/2 rotate-45 border-t border-l border-neutral-200 bg-neutral-50 dark:border-neutral-700/80 dark:bg-neutral-900"
 		></span>
 	</td>
 </template>

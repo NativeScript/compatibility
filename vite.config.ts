@@ -1,17 +1,11 @@
+import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import vue from "@vitejs/plugin-vue";
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite";
 
+// One dev server for everything: Vite serves the Vue app and the Cloudflare
+// plugin runs the Worker (API, KV, cron) in workerd alongside it.
 export default defineConfig({
-	root: "web",
-	plugins: [vue(), tailwindcss()],
-	build: { outDir: "../dist/web", emptyOutDir: true },
-	server: {
-		// `npm run dev:api` serves the Worker; the page talks to it through this proxy.
-		proxy: { "/v1": "http://localhost:8787" },
-	},
-	test: {
-		root: ".",
-		include: ["test/**/*.test.ts"],
-	},
+	plugins: [vue(), tailwindcss(), cloudflare()],
+	server: { port: 8787 },
 });

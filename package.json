@@ -6,15 +6,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:api": "wrangler dev --test-scheduled",
     "build": "vite build",
-    "preview": "npm run build && wrangler dev",
-    "deploy": "npm run build && wrangler deploy",
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler deploy",
     "types": "wrangler types",
     "check": "tsc --noEmit && vue-tsc --noEmit -p web/tsconfig.json",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.54.6",
     "@cloudflare/workers-types": "^5.20260908.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/semver": "^7.8.0",

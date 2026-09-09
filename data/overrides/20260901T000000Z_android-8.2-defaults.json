@@ -1,0 +1,11 @@
+{
+	"$schema": "https://compatibility.nativescript.org/v1/schemas/overrides.json",
+	"kind": "requirements",
+	"package": "@nativescript/android",
+	"versions": ">=8.2.0 <8.6.0",
+	"set": {
+		"compileSdk": ">=28",
+		"buildTools": ">=23",
+		"jdk": ">=1.8"
+	}
+}

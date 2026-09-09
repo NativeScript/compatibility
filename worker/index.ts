@@ -1,14 +1,25 @@
-import overrides from "../data/overrides.json";
-import verified from "../data/verified.json";
 import compatibilitySchema from "../schemas/compatibility.json";
 import overridesSchema from "../schemas/overrides.json";
 import packageSchema from "../schemas/package.json";
 import requirementsSchema from "../schemas/requirements.json";
 import verifiedSchema from "../schemas/verified.json";
-import { buildDocument, matchingAdvisories, TRACKED_PACKAGES } from "../shared/compute";
+import { buildDocument, collectOverrides, matchingAdvisories, TRACKED_PACKAGES } from "../shared/compute";
 import { fetchPackage } from "./sources/npm";
 import { fetchToolchains } from "./sources/toolchains";
-import type { CompatibilityDocument, OverridesFile, ToolchainKey, VerifiedFile } from "../shared/types";
+import type { CompatibilityDocument, OverrideEntry, ToolchainKey, VerificationResult } from "../shared/types";
+
+// Data folders are bundled at build time: CI and maintainers only add files.
+function sortedEntries<T>(modules: Record<string, unknown>): T[] {
+	return Object.keys(modules)
+		.sort()
+		.map((file) => modules[file] as T);
+}
+const verified = sortedEntries<VerificationResult>(
+	import.meta.glob("../data/verified/**/*.json", { eager: true, import: "default" }),
+);
+const overrides = collectOverrides(
+	sortedEntries<OverrideEntry>(import.meta.glob("../data/overrides/*.json", { eager: true, import: "default" })),
+);
 
 const SCHEMAS: Record<string, unknown> = {
 	"compatibility.json": compatibilitySchema,
@@ -112,8 +123,8 @@ async function refresh(env: Env): Promise<CompatibilityDocument> {
 		generatedAt: new Date().toISOString(),
 		toolchains,
 		packages,
-		overrides: overrides as OverridesFile,
-		verified: verified as VerifiedFile,
+		overrides,
+		verified,
 	});
 
 	await env.COMPAT_KV.put(KV_KEY, JSON.stringify(document), { expirationTtl: KV_TTL_SECONDS });

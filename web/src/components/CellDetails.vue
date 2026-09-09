@@ -70,9 +70,9 @@ function shortDate(version: string): string {
 			<strong>{{ label }}</strong>
 			<template v-if="summary.rawRange">
 				{{ " " }}declared <code>{{ summary.rawRange }}</code>
-				<span class="text-neutral-500"> ({{ sourceText }})</span>
+				<span class="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400"> ({{ sourceText }})</span>
 			</template>
-			<span v-else class="text-neutral-500"> no requirement {{ sourceText === "nothing published" ? "published" : "found" }}</span>
+			<span v-else class="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400"> no requirement {{ sourceText === "nothing published" ? "published" : "found" }}</span>
 			<span v-if="summary.verified.length" class="text-ok"> · verified by CI with {{ summary.verified.join(", ") }}</span>
 		</p>
 
@@ -111,7 +111,7 @@ function shortDate(version: string): string {
 						class="relative z-10 rounded-full bg-white ring-[3px] ring-white dark:bg-neutral-950 dark:ring-neutral-950"
 					/>
 				</span>
-				<span class="h-5 text-[11px] leading-5 text-neutral-500 tabular-nums">{{ shortDate(item.version) }}</span>
+				<span class="h-5 text-[11px] leading-5 text-neutral-500 dark:text-neutral-400 tabular-nums">{{ shortDate(item.version) }}</span>
 			</div>
 		</div>
 
@@ -120,7 +120,7 @@ function shortDate(version: string): string {
 				<StateIcon :state="item.cell.state" :size="14" class="mt-0.5" />
 				<span>
 					<strong :class="LABEL[item.cell.state]">{{ label }} {{ item.version }}<template v-if="item.prerelease"> beta</template></strong>
-					<span class="text-neutral-500"> · </span>
+					<span class="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400"> · </span>
 					<template v-if="item.cell.advisory">
 						{{ item.cell.advisory.message }}
 						<em v-if="item.cell.advisory.fix" class="ml-1">{{ item.cell.advisory.fix }}</em>

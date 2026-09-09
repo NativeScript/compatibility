@@ -18,6 +18,12 @@
 	}
 	html.dark {
 		color-scheme: dark;
+		/* Brighter status colours: the light-mode values sink into a dark background. */
+		--color-ok: #3ccc74;
+		--color-declared: #5aa6ee;
+		--color-unverified: #a3a8b0;
+		--color-advisory: #f2a82c;
+		--color-bad: #f26b66;
 	}
 	body {
 		@apply bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
@@ -27,6 +33,6 @@
 @utility hatched {
 	background-image: repeating-linear-gradient(-45deg, transparent 0 6px, rgb(0 0 0 / 0.035) 6px 8px);
 	@variant dark {
-		background-image: repeating-linear-gradient(-45deg, transparent 0 6px, rgb(255 255 255 / 0.05) 6px 8px);
+		background-image: repeating-linear-gradient(-45deg, transparent 0 6px, rgb(255 255 255 / 0.09) 6px 8px);
 	}
 }

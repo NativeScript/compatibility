@@ -6,8 +6,7 @@
 	"compatibility_flags": ["nodejs_compat"],
 	"observability": { "enabled": true, "head_sampling_rate": 1 },
 	"assets": {
-		// The Vue app built by Vite. Requests that match no asset (the /v1 API) reach the Worker.
-		"directory": "./dist/web",
+		// The Vite plugin points this at the client build; requests matching no asset reach the Worker.
 		"not_found_handling": "none"
 	},
 	"kv_namespaces": [

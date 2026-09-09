@@ -71,30 +71,40 @@ export interface CompatibilityDocument {
 	advisories: Advisory[];
 }
 
-/** Hand-maintained inputs, see data/overrides.json. */
-export interface OverridesFile {
-	$schema?: string;
-	requirements: Array<{
-		package: string;
-		versions: string;
-		set: RequirementRanges;
-		note?: string;
-	}>;
+export interface RequirementsOverride {
+	package: string;
+	versions: string;
+	set: RequirementRanges;
+	note?: string;
+}
+
+/** One file under data/overrides/, applied in file-name (timestamp) order. */
+export type OverrideEntry =
+	| ({ $schema?: string; kind: "requirements" } & RequirementsOverride)
+	| ({ $schema?: string; kind: "advisory" } & Advisory);
+
+/** The override entries folded into the two lists the compute model consumes. */
+export interface Overrides {
+	requirements: RequirementsOverride[];
 	advisories: Advisory[];
 }
 
-/** CI-produced inputs, see data/verified.json and scripts/report-verification.mjs. */
-export interface VerifiedFile {
+/**
+ * One CI-proven build of a runtime version with every relevant version
+ * pinned, stored as its own file under data/verified/. It verifies each
+ * toolchain in `toolchains` for the runtime, and the Node.js major for the
+ * CLI version it was built with.
+ */
+export interface VerificationResult {
 	$schema?: string;
-	results: Array<{
-		package: string;
-		version: string;
-		toolchain: ToolchainKey;
-		toolchainVersion: string;
-		/** Workflow run or job URL that proved it. */
-		evidence?: string;
-		date?: string;
-	}>;
+	package: string;
+	version: string;
+	toolchains: Partial<Record<Exclude<ToolchainKey, "node">, string>>;
+	with: { nativescript: string; node: string };
+	resolved?: Record<string, string>;
+	/** Workflow run or job URL that proved it. */
+	evidence?: string;
+	recordedAt: string;
 }
 
 export type CellState =

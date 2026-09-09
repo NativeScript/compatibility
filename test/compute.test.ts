@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildDocument, cellFor, effectiveRequirements, matchingAdvisories } from "../shared/compute";
-import type { CompatibilityDocument, OverridesFile, VerifiedFile } from "../shared/types";
+import type { CompatibilityDocument, Overrides, VerificationResult } from "../shared/types";
 
-const overrides: OverridesFile = {
+const overrides: Overrides = {
 	requirements: [
 		{ package: "@nativescript/ios", versions: "<9.0.0", set: { xcode: ">=15 <26" } },
 	],
@@ -19,11 +19,15 @@ const overrides: OverridesFile = {
 	],
 };
 
-const verified: VerifiedFile = {
-	results: [
-		{ package: "@nativescript/ios", version: "9.1.0", toolchain: "xcode", toolchainVersion: "26.2" },
-	],
-};
+const verified: VerificationResult[] = [
+	{
+		package: "@nativescript/ios",
+		version: "9.1.0",
+		toolchains: { xcode: "26.2" },
+		with: { nativescript: "9.1.1", node: "22" },
+		recordedAt: "2026-09-01T00:00:00Z",
+	},
+];
 
 function document(): CompatibilityDocument {
 	return buildDocument({
@@ -124,5 +128,32 @@ describe("summarizeCell", () => {
 		expect(unknown.state).toBe("unverified");
 		expect(unknown.range).toBe("");
 		expect(unknown.latestCovered).toBeUndefined();
+	});
+});
+
+import { verifiedPairs } from "../shared/compute";
+
+describe("verifiedPairs", () => {
+	it("derives runtime toolchain pairs and the CLI's Node.js pair from one build", () => {
+		expect(verifiedPairs(verified)).toEqual([
+			{ package: "@nativescript/ios", version: "9.1.0", toolchain: "xcode", toolchainVersion: "26.2" },
+			{ package: "nativescript", version: "9.1.1", toolchain: "node", toolchainVersion: "22" },
+		]);
+	});
+});
+
+import { collectOverrides } from "../shared/compute";
+
+describe("collectOverrides", () => {
+	it("splits entries by kind and drops the file-only fields", () => {
+		expect(
+			collectOverrides([
+				{ $schema: "x", kind: "requirements", package: "p", versions: "*", set: { jdk: ">=17" } },
+				{ $schema: "x", kind: "advisory", id: "a", package: "p", affects: "*", when: { jdk: ">=25" }, severity: "warn", message: "m" },
+			]),
+		).toEqual({
+			requirements: [{ package: "p", versions: "*", set: { jdk: ">=17" } }],
+			advisories: [{ id: "a", package: "p", affects: "*", when: { jdk: ">=25" }, severity: "warn", message: "m" }],
+		});
 	});
 });

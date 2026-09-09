@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import overrides from "../data/overrides.json";
-import verified from "../data/verified.json";
 import compatibilitySchema from "../schemas/compatibility.json";
 import overridesSchema from "../schemas/overrides.json";
 import requirementsSchema from "../schemas/requirements.json";
 import verifiedSchema from "../schemas/verified.json";
-import { buildDocument } from "../shared/compute";
-import type { OverridesFile, VerifiedFile } from "../shared/types";
+import { buildDocument, collectOverrides } from "../shared/compute";
+import type { OverrideEntry, VerificationResult } from "../shared/types";
+
+const verifiedFiles = import.meta.glob("../data/verified/**/*.json", { eager: true, import: "default" }) as Record<string, VerificationResult>;
+const overrideFiles = import.meta.glob("../data/overrides/*.json", { eager: true, import: "default" }) as Record<string, OverrideEntry>;
+const STAMP = /^\d{8}T\d{6}Z_/;
 
 function validator() {
 	const ajv = new Ajv({ strict: false, allErrors: true });
@@ -21,18 +23,26 @@ function validator() {
 }
 
 describe("data files", () => {
-	it("data/overrides.json matches its schema", () => {
+	it("every data/overrides entry matches its schema and is timestamped", () => {
 		const ajv = validator();
-		const valid = ajv.validate(overridesSchema.$id, overrides);
-		expect(ajv.errors, JSON.stringify(ajv.errors)).toBeNull();
-		expect(valid).toBe(true);
+		expect(Object.keys(overrideFiles).length).toBeGreaterThan(0);
+		for (const [file, entry] of Object.entries(overrideFiles)) {
+			const valid = ajv.validate(overridesSchema.$id, entry);
+			expect(ajv.errors, `${file}: ${JSON.stringify(ajv.errors)}`).toBeNull();
+			expect(valid).toBe(true);
+			expect(file.split("/").pop()).toMatch(STAMP);
+		}
 	});
 
-	it("data/verified.json matches its schema", () => {
+	it("every data/verified result file matches its schema and its path", () => {
 		const ajv = validator();
-		const valid = ajv.validate(verifiedSchema.$id, verified);
-		expect(ajv.errors, JSON.stringify(ajv.errors)).toBeNull();
-		expect(valid).toBe(true);
+		for (const [file, result] of Object.entries(verifiedFiles)) {
+			const valid = ajv.validate(verifiedSchema.$id, result);
+			expect(ajv.errors, `${file}: ${JSON.stringify(ajv.errors)}`).toBeNull();
+			expect(valid).toBe(true);
+			expect(file.startsWith(`../data/verified/${result.package}/`)).toBe(true);
+			expect(file.split("/").pop()).toMatch(STAMP);
+		}
 	});
 
 	it("a built document matches the published document schema", () => {
@@ -45,8 +55,8 @@ describe("data files", () => {
 					document: { distTags: { latest: "9.1.0" }, manifests: [{ version: "9.1.0", requirements: { xcode: ">=16" } }] },
 				},
 			],
-			overrides: overrides as OverridesFile,
-			verified: verified as VerifiedFile,
+			overrides: collectOverrides(Object.values(overrideFiles)),
+			verified: Object.values(verifiedFiles),
 		});
 		const ajv = validator();
 		const valid = ajv.validate(compatibilitySchema.$id, document);

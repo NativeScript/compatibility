@@ -3,12 +3,13 @@ import type {
 	Advisory,
 	CellState,
 	CompatibilityDocument,
-	OverridesFile,
+	OverrideEntry,
+	Overrides,
 	PackageCompatibility,
 	RequirementRanges,
 	ToolchainKey,
 	ToolchainVersion,
-	VerifiedFile,
+	VerificationResult,
 	VersionCompatibility,
 } from "./types";
 import type { PackageDocument } from "../worker/sources/npm";
@@ -26,13 +27,30 @@ export const TRACKED_PACKAGES: TrackedPackageSpec[] = [
 	{ name: "nativescript", toolchains: ["node"], keep: 8 },
 ];
 
+/**
+ * Folds override files into requirement and advisory lists. Callers pass the
+ * entries in file-name order so a later timestamp wins where two overlap.
+ */
+export function collectOverrides(entries: OverrideEntry[]): Overrides {
+	const overrides: Overrides = { requirements: [], advisories: [] };
+	for (const entry of entries) {
+		const { $schema, kind, ...rest } = entry;
+		if (kind === "requirements") {
+			overrides.requirements.push(rest as Overrides["requirements"][number]);
+		} else {
+			overrides.advisories.push(rest as Advisory);
+		}
+	}
+	return overrides;
+}
+
 export function buildDocument(input: {
 	schema?: string;
 	generatedAt: string;
 	toolchains: Record<ToolchainKey, ToolchainVersion[]>;
 	packages: Array<{ spec: TrackedPackageSpec; document: PackageDocument }>;
-	overrides: OverridesFile;
-	verified: VerifiedFile;
+	overrides: Overrides;
+	verified: VerificationResult[];
 }): CompatibilityDocument {
 	const packages: Record<string, PackageCompatibility> = {};
 
@@ -78,7 +96,7 @@ export function effectiveRequirements(
 	packageName: string,
 	version: string,
 	published: RequirementRanges | undefined,
-	overrides: OverridesFile,
+	overrides: Overrides,
 ): { ranges: RequirementRanges; source: VersionCompatibility["source"] } {
 	const ranges: RequirementRanges = { ...published };
 	let overridden = false;
@@ -96,17 +114,43 @@ export function effectiveRequirements(
 	return { ranges, source };
 }
 
+/**
+ * A result proves every toolchain it pinned for the runtime it built, and the
+ * Node.js major for the CLI it built with.
+ */
+export function verifiedPairs(
+	verified: VerificationResult[],
+): Array<{ package: string; version: string; toolchain: ToolchainKey; toolchainVersion: string }> {
+	return verified.flatMap((entry) => [
+		...Object.entries(entry.toolchains).map(([toolchain, toolchainVersion]) => ({
+			package: entry.package,
+			version: entry.version,
+			toolchain: toolchain as ToolchainKey,
+			toolchainVersion: toolchainVersion!,
+		})),
+		{
+			package: "nativescript",
+			version: entry.with.nativescript,
+			toolchain: "node" as ToolchainKey,
+			toolchainVersion: entry.with.node,
+		},
+	]);
+}
+
 function verifiedFor(
 	packageName: string,
 	version: string,
-	verified: VerifiedFile,
+	verified: VerificationResult[],
 ): VersionCompatibility["verified"] {
 	const result: VersionCompatibility["verified"] = {};
-	for (const entry of verified.results) {
-		if (entry.package !== packageName || entry.version !== version) {
+	for (const pair of verifiedPairs(verified)) {
+		if (pair.package !== packageName || pair.version !== version) {
 			continue;
 		}
-		(result[entry.toolchain] ??= []).push(entry.toolchainVersion);
+		const list = (result[pair.toolchain] ??= []);
+		if (!list.includes(pair.toolchainVersion)) {
+			list.push(pair.toolchainVersion);
+		}
 	}
 	return result;
 }

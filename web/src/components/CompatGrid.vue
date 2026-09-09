@@ -77,12 +77,12 @@ function toggleExpanded(name: string) {
 		: [...expanded.value, name];
 }
 
-const border = "border-b border-r border-neutral-200 last:border-r-0 dark:border-neutral-800";
+const border = "border-b border-r border-neutral-200 last:border-r-0 dark:border-neutral-700/80";
 const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-neutral-900 ${border}`;
 </script>
 
 <template>
-	<div class="border-y border-neutral-200 dark:border-neutral-800">
+	<div class="border-y border-neutral-200 dark:border-neutral-700/80">
 		<table class="w-full min-w-[60rem] table-fixed border-separate border-spacing-0 text-sm">
 			<colgroup>
 				<col class="w-88" />
@@ -96,7 +96,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 						:key="group.platform"
 						:colspan="group.keys.length"
 						:class="headCell"
-						class="top-0 h-8 px-3 text-[11px] font-semibold tracking-wider text-neutral-500 uppercase"
+						class="top-0 h-8 px-3 text-[11px] font-semibold tracking-wider text-neutral-500 dark:text-neutral-400 uppercase dark:text-neutral-500"
 					>
 						{{ group.platform }}
 					</th>
@@ -109,10 +109,10 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 				<tr>
 					<th
 						:colspan="ALL_KEYS.length + 1"
-						class="border-b border-neutral-200 bg-sky-50/70 px-6 py-2 text-left font-semibold dark:border-neutral-800 dark:bg-sky-950/30"
+						class="border-b border-neutral-200 bg-sky-50/70 px-6 py-2 text-left font-semibold dark:border-neutral-700/80 dark:bg-sky-900/25"
 					>
 						<code>{{ group.name }}</code>
-						<span class="ml-2 text-xs font-normal text-neutral-500">{{ group.total }} releases</span>
+						<span class="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">{{ group.total }} releases</span>
 					</th>
 				</tr>
 				<template v-for="version in group.visible" :key="version">
@@ -120,7 +120,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 						<th
 							scope="row"
 							:class="border"
-							class="px-6 py-3 text-left align-top font-medium group-hover:bg-neutral-50 dark:group-hover:bg-neutral-900"
+							class="px-6 py-3 text-left align-top font-medium group-hover:bg-neutral-50 dark:group-hover:bg-neutral-800/70"
 						>
 							<code>{{ version }}</code>
 							<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -132,7 +132,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 									{{ tag }}
 								</span>
 								<span
-									class="text-[10px] tracking-wider text-neutral-400 uppercase"
+									class="text-[10px] tracking-wider text-neutral-400 uppercase dark:text-neutral-500"
 									:title="`Requirements: ${document.packages[group.name].versions[version].source}`"
 								>
 									{{ document.packages[group.name].versions[version].source }}
@@ -154,7 +154,7 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 					<tr v-if="isOpen(group.name, version)">
 						<td
 							:colspan="ALL_KEYS.length + 1"
-							class="border-b border-neutral-200 bg-neutral-50 px-6 py-5 dark:border-neutral-800 dark:bg-neutral-900"
+							class="border-b border-neutral-200 bg-neutral-50 px-6 py-5 dark:border-neutral-700/80 dark:bg-neutral-900"
 						>
 							<CellDetails :summary="summary(group.name, version, open!.key)" :toolchain="open!.key" :document="document" />
 						</td>
@@ -170,10 +170,10 @@ const headCell = `sticky z-10 bg-neutral-50 text-center font-semibold dark:bg-ne
 							{{ expanded.includes(group.name) ? "Show less" : `Show ${group.total - INITIAL_ROWS} more` }}
 						</button>
 					</th>
-					<td :colspan="ALL_KEYS.length" :class="border" class="bg-neutral-50/60 dark:bg-neutral-900/40"></td>
+					<td :colspan="ALL_KEYS.length" :class="border" class="bg-neutral-50/60 dark:bg-neutral-900/70"></td>
 				</tr>
 			</tbody>
 		</table>
-		<p v-if="!groups.length" class="px-6 py-4 text-neutral-500">No releases match.</p>
+		<p v-if="!groups.length" class="px-6 py-4 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">No releases match.</p>
 	</div>
 </template>

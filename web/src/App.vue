@@ -52,7 +52,7 @@ function label(key: string): string {
 			<a class="text-declared hover:underline" href="https://github.com/NativeScript/compatibility">Data on GitHub</a>
 			<a class="text-declared hover:underline" href="/v1/compatibility.json">JSON</a>
 			<a class="text-declared hover:underline" href="/v1/schemas/package.json">Schema</a>
-			<span v-if="generated" class="text-neutral-500">Updated {{ generated }}</span>
+			<span v-if="generated" class="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">Updated {{ generated }}</span>
 		</nav>
 		<div class="mt-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
 			<div class="flex flex-wrap items-center gap-5">
@@ -76,7 +76,7 @@ function label(key: string): string {
 
 	<main>
 		<p v-if="error" class="px-6 text-bad">Could not load compatibility data: {{ error }}</p>
-		<p v-else-if="!document" class="px-6 text-neutral-500">Loading…</p>
+		<p v-else-if="!document" class="px-6 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">Loading…</p>
 		<template v-else>
 			<CompatGrid v-model:open="open" v-model:expanded="expanded" :document="document" :query="query" :show-prereleases="showPrereleases" />
 
@@ -90,7 +90,7 @@ function label(key: string): string {
 								<strong :class="advisory.severity === 'error' ? 'text-bad' : 'text-advisory'">
 									<code>{{ advisory.package }}</code> {{ advisory.affects }}
 								</strong>
-								<span class="text-neutral-500"> when </span>
+								<span class="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400"> when </span>
 								<span v-for="(range, key, index) in advisory.when" :key="key">
 									<template v-if="index > 0">, </template>{{ label(key) }} <code>{{ range }}</code>
 								</span>

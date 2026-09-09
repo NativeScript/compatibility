@@ -7,16 +7,47 @@ as a browser-support-style matrix (Vue + Vite) for people.
 ## Layout
 
 - `worker/` the Worker: `/v1` API, hourly cron that rebuilds the document into
-  KV, static assets for the built app.
+  KV, static assets for the built app. The Cloudflare Vite plugin runs it next
+  to the app in development and builds both together.
 - `shared/` the document contract and the compute model, used by the Worker,
   the app and the tests.
 - `web/` the Vue app.
 - `schemas/` JSON Schemas served under `/v1/schemas/`.
-- `data/` maintainer inputs: `overrides.json` (requirements for older
-  releases, advisories), `verified.json` (CI results), `toolchains.json`
-  (toolchain versions without a public feed, and feed fallbacks).
-- `scripts/report-verification.mjs` and `.github/workflows/compat-check.yml`
-  the CI matrix sketch that records verified cells.
+- `data/overrides/` one file per maintainer entry, `<timestamp>_<slug>.json`:
+  either a requirements override for releases that publish none, or an
+  advisory. Entries apply in file-name order, so a later timestamp wins.
+- `data/verified/<package>/` one file per CI-proven pinned build,
+  `<timestamp>_<version>_<pinned versions>.json`.
+- `data/toolchains.json` toolchain versions without a public feed, and feed
+  fallbacks.
+- `scripts/` and `.github/workflows/compat-check.yml`: the verification
+  pipeline (see below).
+
+## Verification pipeline
+
+`compat-check` runs weekly and on demand:
+
+1. **Matrix**: `scripts/build-matrix.mjs` pulls the newest CLI and runtime
+   releases from npm, Node.js majors from nodejs.org, Xcode lines from
+   xcodereleases.com (intersected with what the GitHub macOS runner image
+   ships), Android API levels from the SDK repository and JDK LTS releases
+   from Adoptium, forms every pinned combination, and drops the ones that
+   already have a file under `data/verified/`. The first run is large (GitHub
+   allows 256 jobs per matrix; the rest wait for the next run); afterwards a
+   run only contains what a new CLI, runtime, Node.js, Xcode or SDK release
+   creates. A combination verified once is never rebuilt.
+2. **Build jobs**: one job per combination installs the pinned CLI and
+   Node.js, creates a fresh app, builds it with the pinned runtime and
+   toolchain, and on success writes its result file under `data/verified/`.
+   One build proves the runtime's toolchain cells and the CLI's Node.js cell.
+3. **Collect**: the artifacts are dropped onto the checkout and proposed as a
+   pull request that only adds files. Merging it redeploys the site with those
+   cells marked as verified by CI.
+
+Running the workflow by hand with its inputs filled in verifies one specific
+combination instead of the feed-driven set; `force` rebuilds a combination
+that is already recorded. `scripts/report-verification.mjs` writes the same
+result file for a verification done outside CI.
 
 ## How a cell gets its state
 
@@ -64,9 +95,8 @@ editors validate and complete the `nativescript` block. npm ignores the
 
 ```bash
 npm install
-npm run dev:api     # Worker on :8787 (API, cron via /__scheduled)
-npm run dev         # Vite dev server with /v1 proxied to the Worker
-npm run build       # builds the app into dist/web
-npm run preview     # build, then wrangler dev serving app + API together
+npm run dev         # app and Worker together on http://localhost:8787
+npm run build       # client and Worker into dist/, with a generated wrangler.json
+npm run deploy      # build, then wrangler deploy
 npm test && npm run check
 ```

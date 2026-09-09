@@ -21,7 +21,7 @@ const OPTIONS: Array<{ value: "auto" | "light" | "dark"; label: string; icon: st
 			:aria-checked="mode === option.value"
 			:title="`${option.label} theme`"
 			class="flex items-center gap-1 rounded-md px-2 py-1 transition-colors"
-			:class="mode === option.value ? 'bg-white shadow-sm dark:bg-neutral-700' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100'"
+			:class="mode === option.value ? 'bg-white shadow-sm dark:bg-neutral-700' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100'"
 			@click="mode = option.value"
 		>
 			<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

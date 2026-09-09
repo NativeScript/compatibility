@@ -4,22 +4,43 @@
 	"title": "NativeScript compatibility document (v1)",
 	"description": "Served at /v1/compatibility.json. Changes within v1 are additive only.",
 	"type": "object",
-	"required": ["schemaVersion", "generatedAt", "toolchains", "packages", "advisories"],
+	"required": [
+		"schemaVersion",
+		"generatedAt",
+		"toolchains",
+		"packages",
+		"advisories"
+	],
 	"properties": {
-		"$schema": { "type": "string" },
-		"schemaVersion": { "const": 1 },
-		"generatedAt": { "type": "string", "format": "date-time" },
+		"$schema": {
+			"type": "string"
+		},
+		"schemaVersion": {
+			"const": 1
+		},
+		"generatedAt": {
+			"type": "string",
+			"format": "date-time"
+		},
 		"toolchains": {
 			"type": "object",
 			"additionalProperties": {
 				"type": "array",
 				"items": {
 					"type": "object",
-					"required": ["version"],
+					"required": [
+						"version"
+					],
 					"properties": {
-						"version": { "type": "string" },
-						"prerelease": { "type": "boolean" },
-						"date": { "type": "string" }
+						"version": {
+							"type": "string"
+						},
+						"prerelease": {
+							"type": "boolean"
+						},
+						"date": {
+							"type": "string"
+						}
 					}
 				}
 			}
@@ -28,26 +49,109 @@
 			"type": "object",
 			"additionalProperties": {
 				"type": "object",
-				"required": ["toolchains", "distTags", "versions"],
+				"required": [
+					"toolchains",
+					"distTags",
+					"versions"
+				],
 				"properties": {
-					"toolchains": { "type": "array", "items": { "type": "string" } },
-					"distTags": { "type": "object", "additionalProperties": { "type": "string" } },
+					"toolchains": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"distTags": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "string"
+						}
+					},
 					"versions": {
 						"type": "object",
 						"additionalProperties": {
 							"type": "object",
-							"required": ["requirements", "source", "verified"],
+							"required": [
+								"requirements",
+								"source",
+								"verified"
+							],
 							"properties": {
-								"requirements": { "$ref": "https://compatibility.nativescript.org/v1/schemas/requirements.json" },
-								"source": { "enum": ["manifest", "override", "none"] },
-								"verified": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
-								"publishedAt": { "type": "string" }
+								"requirements": {
+									"$ref": "https://compatibility.nativescript.org/v1/schemas/requirements.json"
+								},
+								"source": {
+									"enum": [
+										"manifest",
+										"override",
+										"none"
+									]
+								},
+								"verified": {
+									"type": "object",
+									"additionalProperties": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									}
+								},
+								"publishedAt": {
+									"type": "string"
+								}
 							}
 						}
 					}
 				}
 			}
 		},
-		"advisories": { "type": "array", "items": { "$ref": "https://compatibility.nativescript.org/v1/schemas/overrides.json#/definitions/advisory" } }
+		"advisories": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/advisory"
+			}
+		}
+	},
+	"definitions": {
+		"advisory": {
+			"type": "object",
+			"required": [
+				"id",
+				"package",
+				"affects",
+				"when",
+				"severity",
+				"message"
+			],
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"package": {
+					"type": "string"
+				},
+				"affects": {
+					"type": "string"
+				},
+				"when": {
+					"$ref": "https://compatibility.nativescript.org/v1/schemas/requirements.json"
+				},
+				"severity": {
+					"enum": [
+						"error",
+						"warn"
+					]
+				},
+				"message": {
+					"type": "string"
+				},
+				"fix": {
+					"type": "string"
+				},
+				"url": {
+					"type": "string"
+				}
+			}
+		}
 	}
 }

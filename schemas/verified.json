@@ -1,26 +1,76 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$id": "https://compatibility.nativescript.org/v1/schemas/verified.json",
-	"title": "CI verification results",
+	"title": "CI verification result",
+	"description": "One successful build of a runtime version with a pinned set of toolchain versions, CLI version and Node.js major. Stored under data/verified/<package>/ as <timestamp>_<version>_<pinned versions>.json; CI jobs only ever add files, and a combination recorded once is never rebuilt.",
 	"type": "object",
-	"required": ["results"],
+	"required": [
+		"package",
+		"version",
+		"toolchains",
+		"with",
+		"recordedAt"
+	],
+	"additionalProperties": false,
 	"properties": {
-		"$schema": { "type": "string" },
-		"results": {
-			"type": "array",
-			"items": {
-				"type": "object",
-				"required": ["package", "version", "toolchain", "toolchainVersion"],
-				"additionalProperties": false,
-				"properties": {
-					"package": { "type": "string" },
-					"version": { "type": "string" },
-					"toolchain": { "enum": ["xcode", "cocoapods", "compileSdk", "buildTools", "jdk", "node"] },
-					"toolchainVersion": { "type": "string" },
-					"evidence": { "type": "string", "description": "URL of the workflow run that proved it." },
-					"date": { "type": "string", "format": "date" }
+		"$schema": {
+			"type": "string"
+		},
+		"package": {
+			"type": "string",
+			"description": "The runtime package that was built."
+		},
+		"version": {
+			"type": "string"
+		},
+		"toolchains": {
+			"type": "object",
+			"description": "Toolchain versions the build used, by key.",
+			"propertyNames": {
+				"enum": [
+					"xcode",
+					"cocoapods",
+					"compileSdk",
+					"buildTools",
+					"jdk"
+				]
+			},
+			"additionalProperties": {
+				"type": "string"
+			},
+			"minProperties": 1
+		},
+		"with": {
+			"type": "object",
+			"description": "Pinned environment: the CLI version and the Node.js major.",
+			"required": [
+				"nativescript",
+				"node"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"nativescript": {
+					"type": "string"
+				},
+				"node": {
+					"type": "string"
 				}
 			}
+		},
+		"resolved": {
+			"type": "object",
+			"description": "Exact versions observed on the runner, for the record.",
+			"additionalProperties": {
+				"type": "string"
+			}
+		},
+		"evidence": {
+			"type": "string",
+			"description": "URL of the workflow run that proved it."
+		},
+		"recordedAt": {
+			"type": "string",
+			"format": "date-time"
 		}
 	}
 }
