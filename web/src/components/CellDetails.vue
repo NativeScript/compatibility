@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import type { CellSummary } from "../../../shared/compute";
 import { TOOLCHAIN_LABELS, type CellState, type CompatibilityDocument, type ToolchainKey } from "../../../shared/types";
 import { STATE_HELP } from "../states";
+import BetaChip from "./BetaChip.vue";
 import StateIcon from "./StateIcon.vue";
 
 const INITIAL_NODES = 5;
@@ -99,7 +100,7 @@ function shortDate(version: string): string {
 			>
 				<span class="flex h-6 items-center gap-1 text-sm leading-6 font-semibold tabular-nums whitespace-nowrap" :class="LABEL[item.cell.state]">
 					{{ item.version }}
-					<span v-if="item.prerelease" class="rounded-full bg-amber-100 px-1.5 py-px text-[9px] font-semibold tracking-wider text-amber-700 uppercase dark:bg-amber-900/40 dark:text-amber-300">beta</span>
+					<BetaChip v-if="item.prerelease" />
 				</span>
 				<span class="relative flex h-6 w-full items-center justify-center">
 					<span

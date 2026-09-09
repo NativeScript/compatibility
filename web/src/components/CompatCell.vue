@@ -3,6 +3,7 @@ import { computed } from "vue";
 import type { CellSummary } from "../../../shared/compute";
 import type { CellState } from "../../../shared/types";
 import { STATE_HELP } from "../states";
+import BetaChip from "./BetaChip.vue";
 import StateIcon from "./StateIcon.vue";
 
 const props = defineProps<{ summary: CellSummary; toolchain: string; open: boolean }>();
@@ -53,7 +54,7 @@ const background = computed(() => {
 		>
 			<StateIcon :state="summary.prerelease.cell.state" :size="12" />
 			{{ summary.prerelease.version }}
-			<span class="rounded-full bg-amber-100 px-1.5 py-px text-[9px] font-semibold tracking-wider text-amber-700 uppercase dark:bg-amber-900/40 dark:text-amber-300">beta</span>
+			<BetaChip />
 		</span>
 		<span
 			v-if="flagged"
