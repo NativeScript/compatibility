@@ -23,10 +23,10 @@ export interface TrackedPackageSpec {
 export const CLI_PACKAGE = "nativescript";
 
 export const TRACKED_PACKAGES: TrackedPackageSpec[] = [
+	{ name: CLI_PACKAGE, toolchains: ["node", "xcode", "cocoapods", "compileSdk", "buildTools", "jdk"], keep: 8 },
 	{ name: "@nativescript/ios", toolchains: ["xcode", "cocoapods"], keep: 12 },
 	{ name: "@nativescript/android", toolchains: ["compileSdk", "buildTools", "jdk"], keep: 12 },
 	{ name: "@nativescript/visionos", toolchains: ["xcode"], keep: 6 },
-	{ name: CLI_PACKAGE, toolchains: ["node", "xcode", "cocoapods", "compileSdk", "buildTools", "jdk"], keep: 8 },
 ];
 
 /**
