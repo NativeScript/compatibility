@@ -104,10 +104,10 @@ export interface Overrides {
 }
 
 /**
- * One CI-proven build of a runtime version with every relevant version
- * pinned, stored as its own file under data/verified/. It verifies each
- * toolchain in `toolchains` for the runtime, and the Node.js major for the
- * CLI version it was built with.
+ * One CI build of a runtime version with every relevant version pinned,
+ * stored as its own file under data/verified/. It is evidence about the
+ * runtime and about the CLI it was built with alike: each toolchain in
+ * `toolchains` for both, and the Node.js major for the CLI.
  */
 export interface VerificationResult {
 	$schema?: string;

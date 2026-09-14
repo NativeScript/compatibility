@@ -20,11 +20,13 @@ export interface TrackedPackageSpec {
 	keep: number;
 }
 
+export const CLI_PACKAGE = "nativescript";
+
 export const TRACKED_PACKAGES: TrackedPackageSpec[] = [
 	{ name: "@nativescript/ios", toolchains: ["xcode", "cocoapods"], keep: 12 },
 	{ name: "@nativescript/android", toolchains: ["compileSdk", "buildTools", "jdk"], keep: 12 },
 	{ name: "@nativescript/visionos", toolchains: ["xcode"], keep: 6 },
-	{ name: "nativescript", toolchains: ["node"], keep: 8 },
+	{ name: CLI_PACKAGE, toolchains: ["node", "xcode", "cocoapods", "compileSdk", "buildTools", "jdk"], keep: 8 },
 ];
 
 /**
@@ -167,44 +169,61 @@ export function classify(entry: VerificationResult): ResultClass {
 	return (entry.attempts ?? 1) >= 2 ? "confirmed" : "suspect";
 }
 
+interface PinnedBuild {
+	package: string;
+	version: string;
+	toolchains: Partial<Record<ToolchainKey, string>>;
+	/** The other package the build pinned: the CLI for a runtime, the runtime for the CLI. */
+	companion: { package: string; version: string };
+	outcome: ResultClass;
+}
+
 /**
- * A successful result proves every toolchain it pinned for the runtime it
- * built, and the Node.js major for the CLI it built with. A failure only
- * speaks about the runtime's toolchains.
+ * One CI build pins a runtime release and a CLI release together, so it is
+ * evidence about both: each toolchain for the runtime, and each toolchain plus
+ * the Node.js major for the CLI.
  */
+function pinnedBuilds(entry: VerificationResult): PinnedBuild[] {
+	const outcome = classify(entry);
+	const runtime = { package: entry.package, version: entry.version };
+	const cli = { package: CLI_PACKAGE, version: entry.with.nativescript };
+	return [
+		{ ...runtime, toolchains: entry.toolchains, companion: cli, outcome },
+		{ ...cli, toolchains: { ...entry.toolchains, node: entry.with.node }, companion: runtime, outcome },
+	];
+}
+
 export function verifiedPairs(
 	verified: VerificationResult[],
 	outcome: ResultClass = "success",
 ): Array<{ package: string; version: string; toolchain: ToolchainKey; toolchainVersion: string }> {
 	return verified
-		.filter((entry) => classify(entry) === outcome)
-		.flatMap((entry) => [
-			...Object.entries(entry.toolchains).map(([toolchain, toolchainVersion]) => ({
-				package: entry.package,
-				version: entry.version,
-				toolchain: toolchain as ToolchainKey,
-				toolchainVersion: toolchainVersion!,
+		.flatMap(pinnedBuilds)
+		.filter((build) => build.outcome === outcome)
+		.flatMap((build) =>
+			(Object.entries(build.toolchains) as Array<[ToolchainKey, string]>).map(([toolchain, toolchainVersion]) => ({
+				package: build.package,
+				version: build.version,
+				toolchain,
+				toolchainVersion,
 			})),
-			// A failed runtime build says nothing about the CLI's Node.js support.
-			...(outcome === "success"
-				? [
-						{
-							package: "nativescript",
-							version: entry.with.nativescript,
-							toolchain: "node" as ToolchainKey,
-							toolchainVersion: entry.with.node,
-						},
-					]
-				: []),
-		]);
+		);
+}
+
+interface Pin {
+	key: string;
+	version: string;
+	/** Companion-package pins take part in blame but are never reported as a toolchain. */
+	toolchain: boolean;
 }
 
 /**
- * A failed build pins several toolchains at once and cannot say which one is
- * to blame. A failure therefore implicates only toolchain versions that no
- * successful build of the same release used, and once one of its pinned
- * versions is the sole suspect of another failure, that version explains the
- * failure and the rest stay unjudged.
+ * A failed build pins several things at once and cannot say which one is to
+ * blame: its toolchains and the other package it was built with. A failure
+ * therefore implicates only pins that no successful build of the same release
+ * used, and once one of its pins is the sole suspect of another failure, that
+ * pin explains the failure and the rest stay unjudged. A failure whose only
+ * suspect is the companion package says nothing about any toolchain.
  */
 function verifiedFor(
 	packageName: string,
@@ -212,45 +231,40 @@ function verifiedFor(
 	verified: VerificationResult[],
 	outcome: ResultClass,
 ): VersionCompatibility["verified"] {
-	const forThisVersion = (entries: VerificationResult[]) =>
-		entries.filter((entry) => entry.package === packageName && entry.version === version);
-	const successes = forThisVersion(verified).filter((entry) => classify(entry) === "success");
-	const provenToWork = (toolchain: ToolchainKey, toolchainVersion: string) =>
-		successes.some((ok) => {
-			const okVersion = ok.toolchains[toolchain as Exclude<ToolchainKey, "node">];
-			return okVersion !== undefined && sameLine(okVersion, toolchainVersion);
-		});
+	const builds = verified
+		.flatMap(pinnedBuilds)
+		.filter((build) => build.package === packageName && build.version === version);
+	const successes = builds.filter((build) => build.outcome === "success");
+	const pinsOf = (build: PinnedBuild): Pin[] => [
+		...Object.entries(build.toolchains).map(([key, pinned]) => ({ key, version: pinned!, toolchain: true })),
+		{ key: build.companion.package, version: build.companion.version, toolchain: false },
+	];
+	const samePin = (a: Pin, b: Pin) => a.key === b.key && (a.toolchain ? sameLine(a.version, b.version) : a.version === b.version);
+	const provenToWork = (pin: Pin) => successes.some((ok) => pinsOf(ok).some((used) => samePin(used, pin)));
 
 	const result: VersionCompatibility["verified"] = {};
-	const add = (toolchain: ToolchainKey, toolchainVersion: string) => {
-		const list = (result[toolchain] ??= []);
-		if (!list.includes(toolchainVersion)) {
-			list.push(toolchainVersion);
+	const add = (pin: Pin) => {
+		if (!pin.toolchain) {
+			return;
+		}
+		const list = (result[pin.key as ToolchainKey] ??= []);
+		if (!list.includes(pin.version)) {
+			list.push(pin.version);
 		}
 	};
 
 	if (outcome === "success") {
-		for (const pair of verifiedPairs(verified, "success")) {
-			if (pair.package === packageName && pair.version === version) {
-				add(pair.toolchain, pair.toolchainVersion);
-			}
+		for (const ok of successes) {
+			pinsOf(ok).forEach(add);
 		}
 	} else {
-		const suspects = forThisVersion(verified)
-			.filter((entry) => classify(entry) === outcome)
-			.map((entry) =>
-				(Object.entries(entry.toolchains) as Array<[ToolchainKey, string]>).filter(
-					([toolchain, toolchainVersion]) => !provenToWork(toolchain, toolchainVersion),
-				),
-			);
+		const suspects = builds
+			.filter((build) => build.outcome === outcome)
+			.map((build) => pinsOf(build).filter((pin) => !provenToWork(pin)));
 		const culprits = suspects.filter((pins) => pins.length === 1).map(([pin]) => pin);
 		for (const pins of suspects) {
-			const explained = culprits.find(([toolchain, toolchainVersion]) =>
-				pins.some(([key, value]) => key === toolchain && sameLine(value, toolchainVersion)),
-			);
-			for (const [toolchain, toolchainVersion] of explained ? [explained] : pins) {
-				add(toolchain, toolchainVersion);
-			}
+			const explained = culprits.find((culprit) => pins.some((pin) => samePin(pin, culprit)));
+			(explained ? [explained] : pins).forEach(add);
 		}
 	}
 

@@ -135,9 +135,10 @@ describe("summarizeCell", () => {
 import { verifiedPairs } from "../shared/compute";
 
 describe("verifiedPairs", () => {
-	it("derives runtime toolchain pairs and the CLI's Node.js pair from one build", () => {
+	it("credits one build to the runtime and to the CLI it was built with", () => {
 		expect(verifiedPairs(verified)).toEqual([
 			{ package: "@nativescript/ios", version: "9.1.0", toolchain: "xcode", toolchainVersion: "26.2" },
+			{ package: "nativescript", version: "9.1.1", toolchain: "xcode", toolchainVersion: "26.2" },
 			{ package: "nativescript", version: "9.1.1", toolchain: "node", toolchainVersion: "22" },
 		]);
 	});
@@ -188,9 +189,9 @@ describe("failed builds", () => {
 		expect(cellFor(doc(), "@nativescript/android", "9.1.1", "jdk", "21")).toMatchObject({ state: "unverified", reason: "one CI build failed; a second attempt is pending" });
 	});
 
-	it("a success outranks a sibling failure and only successes prove the CLI's Node.js support", () => {
+	it("a success outranks a sibling failure and proves the CLI's toolchains too", () => {
 		expect(cellFor(doc(), "@nativescript/android", "9.1.1", "jdk", "17")).toMatchObject({ state: "verified", reason: "verified by CI" });
-		expect(doc().packages["nativescript"].versions["9.1.1"].verified).toEqual({ node: ["24"] });
+		expect(doc().packages["nativescript"].versions["9.1.1"].verified).toEqual({ jdk: ["17"], node: ["24"] });
 		expect(doc().packages["@nativescript/android"].versions["9.1.1"].failed).toEqual({ jdk: ["25"] });
 		// The JDK 17 failure is not attributed to JDK 17: another build of the release succeeded with it.
 		expect(doc().packages["@nativescript/android"].versions["9.1.1"].suspect).toEqual({ jdk: ["21"] });
@@ -306,6 +307,45 @@ describe("failure attribution", () => {
 		expect(v911.failed).toEqual({ jdk: ["25"] });
 		expect(cellFor(doc, "@nativescript/android", "9.1.1", "buildTools", "36.1.0").state).toBe("unverified");
 		expect(cellFor(doc, "@nativescript/android", "9.1.1", "compileSdk", "36").state).toBe("unverified");
+	});
+});
+
+describe("CLI attribution", () => {
+	const build = (cli: string, xcode: string, extra: Partial<VerificationResult> = {}): VerificationResult => ({
+		package: "@nativescript/ios", version: "9.0.2", toolchains: { xcode }, with: { nativescript: cli, node: "24" }, recordedAt: "2026-09-09T00:00:00Z", ...extra,
+	});
+	const failed = { outcome: "failure" as const, attempts: 2 };
+	const doc = (verified: VerificationResult[]) =>
+		buildDocument({
+			generatedAt: "2026-09-09T00:00:00.000Z",
+			toolchains: { xcode: [{ version: "27.0" }, { version: "26.4" }], cocoapods: [], compileSdk: [], buildTools: [], jdk: [], node: [{ version: "24.0.0" }] },
+			packages: [
+				{
+					spec: { name: "@nativescript/ios", toolchains: ["xcode"], keep: 5 },
+					document: { distTags: {}, manifests: [{ version: "9.0.2", requirements: { xcode: ">=16" } }] },
+				},
+				{
+					spec: { name: "nativescript", toolchains: ["node", "xcode"], keep: 5 },
+					document: { distTags: {}, manifests: [{ version: "9.1.1", requirements: { node: ">=20" } }, { version: "9.1.0", requirements: { node: ">=20" } }] },
+				},
+			],
+			overrides: { requirements: [], advisories: [] },
+			verified,
+		});
+
+	it("blames the CLI, not the toolchain, when a newer CLI builds the same combination", () => {
+		const d = doc([build("9.1.0", "27.0", failed), build("9.1.1", "27.0"), build("9.1.0", "26.4")]);
+		expect(cellFor(d, "@nativescript/ios", "9.0.2", "xcode", "27.0").state).toBe("verified");
+		expect(d.packages["@nativescript/ios"].versions["9.0.2"].failed).toBeUndefined();
+		expect(cellFor(d, "nativescript", "9.1.0", "xcode", "27.0")).toMatchObject({ state: "unsupported" });
+		expect(cellFor(d, "nativescript", "9.1.1", "xcode", "27.0").state).toBe("verified");
+		expect(d.packages["nativescript"].versions["9.1.0"].verified).toEqual({ xcode: ["26.4"], node: ["24"] });
+	});
+
+	it("blames both until another CLI proves the toolchain", () => {
+		const d = doc([build("9.1.0", "27.0", failed), build("9.1.0", "26.4")]);
+		expect(cellFor(d, "@nativescript/ios", "9.0.2", "xcode", "27.0").state).toBe("unsupported");
+		expect(cellFor(d, "nativescript", "9.1.0", "xcode", "27.0").state).toBe("unsupported");
 	});
 });
 

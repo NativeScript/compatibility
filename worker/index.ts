@@ -3,7 +3,7 @@ import overridesSchema from "../schemas/overrides.json";
 import packageSchema from "../schemas/package.json";
 import requirementsSchema from "../schemas/requirements.json";
 import verifiedSchema from "../schemas/verified.json";
-import { buildDocument, collectOverrides, matchingAdvisories, TRACKED_PACKAGES } from "../shared/compute";
+import { buildDocument, CLI_PACKAGE, collectOverrides, matchingAdvisories, TRACKED_PACKAGES } from "../shared/compute";
 import { fetchPackage } from "./sources/npm";
 import { fetchToolchains } from "./sources/toolchains";
 import type { CompatibilityDocument, OverrideEntry, ToolchainKey, VerificationResult } from "../shared/types";
@@ -61,7 +61,8 @@ export default {
 				return Response.json(document, { headers: cacheHeaders() });
 			}
 
-			// /v1/packages/@scope/name/1.2.3?xcode=26.2&jdk=21 → effective requirements plus matching advisories
+			// /v1/packages/@scope/name/1.2.3?xcode=26.2&jdk=21&cli=9.1.1 → effective requirements plus
+			// matching advisories, and the same for the CLI release when one is given
 			const match = url.pathname.match(/^\/v1\/packages\/((?:@[^/]+\/)?[^/]+)\/([^/]+)$/);
 			if (match) {
 				const [, name, version] = match.map(decodeURIComponent);
@@ -70,15 +71,28 @@ export default {
 					return Response.json({ error: "unknown package version" }, { status: 404 });
 				}
 				const toolchain: Partial<Record<ToolchainKey, string>> = {};
+				let cli: string | undefined;
 				for (const [key, value] of url.searchParams) {
-					toolchain[key as ToolchainKey] = value;
+					if (key === "cli") {
+						cli = value;
+					} else {
+						toolchain[key as ToolchainKey] = value;
+					}
 				}
+				const describe = (pkg: string, release: string) => {
+					const known = document.packages[pkg]?.versions[release];
+					return {
+						package: pkg,
+						version: release,
+						...(known
+							? { ...known, advisories: matchingAdvisories(document.advisories, pkg, release, toolchain) }
+							: { tracked: false }),
+					};
+				};
 				return Response.json(
 					{
-						package: name,
-						version,
-						...entry,
-						advisories: matchingAdvisories(document.advisories, name, version, toolchain),
+						...describe(name, version),
+						...(cli ? { cli: describe(CLI_PACKAGE, cli) } : {}),
 					},
 					{ headers: cacheHeaders() },
 				);

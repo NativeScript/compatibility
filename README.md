@@ -75,18 +75,23 @@ result file for a verification done outside CI.
 
 ## How a cell gets its state
 
-A failed build pins several toolchains at once and cannot say which one is to
-blame, so a failure only implicates toolchain versions that no successful
-build of the same release used; when one of those versions is already the
+A failed build pins several things at once and cannot say which one is to
+blame: the toolchains, and the other package it was built with (the CLI for a
+runtime, the runtime for the CLI). A failure only implicates pins that no
+successful build of the same release used; when one of them is already the
 sole suspect of another failure, it explains the failure and the rest stay
-unjudged.
+unjudged. So when a newer CLI builds the same runtime and toolchain, the
+failure lands on the older CLI's row and the runtime's cell stays verified.
+Until then both rows show the failure.
 
 For a release and a toolchain version, in this order:
 
 1. **Unsupported / Advisory**: a maintainer advisory matches the release and
    the toolchain version.
 2. **Verified**: a recorded CI build succeeded with that toolchain version.
-   Any success outranks failures. A failure only marks the cell unsupported
+   A build is evidence about the runtime and about the CLI it was built with
+   alike, so the same result verifies the toolchain for both, and the Node.js
+   major for the CLI. Any success outranks failures. A failure only marks the cell unsupported
    once a second, independent run has confirmed it; a single failure shows as
    unverified with a pending second attempt. A confirmed failure on a newer
    release also marks older releases without a result of their own as
@@ -115,9 +120,12 @@ than the declaration. Clicking a cell shows the same timeline over releases.
 
 - `/` the app.
 - `/v1/compatibility.json` the full document (`$schema` points at its schema).
-- `/v1/packages/<name>/<version>?xcode=26.2&jdk=21` one release: its
-  effective requirements, the toolchain versions verified, failed, suspect or
-  inferred for it, and the advisories matching the given toolchain versions.
+- `/v1/packages/<name>/<version>?xcode=26.2&jdk=21&cli=9.1.1` one release:
+  its effective requirements, the toolchain versions verified, failed, suspect
+  or inferred for it, and the advisories matching the given toolchain
+  versions. With `cli`, the response carries the same for that CLI release
+  under `cli`, so a project's CLI is judged against the same toolchains; a
+  CLI release the document does not track answers with `tracked: false`.
 - `/v1/schemas/{compatibility,requirements,package,overrides,verified}.json`.
 - `/health`.
 
